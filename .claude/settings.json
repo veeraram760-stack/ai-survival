@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"_get_system_state\" c:\\\\\\\\ai_survival\\\\\\\\backend\\\\\\\\agents\\\\\\\\ceo.py)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(python -m pytest tests/unit/test_core.py -v)",
+      "Bash(pip show *)",
+      "Bash(python -c ' *)",
+      "Bash(python -m pytest tests/test_survival.py -v --tb=short)",
+      "Bash(python -m pytest tests/unit/test_survival.py::TestToolIntegrationSurvival::test_tool_costs_tracked_in_ledger -v --tb=short)",
+      "Bash(python -m pytest tests/unit/test_core.py -v --tb=short)",
+      "Bash(python -c \"from backend.main import app; print\\('Import successful'\\)\")",
+      "Read(//mnt/c/**)",
+      "Bash(python -m pytest tests/test_affiliate_link.py -v -x)",
+      "PowerShell(python -m pytest tests/test_survival.py -v 2>&1)",
+      "PowerShell(head -100)",
+      "PowerShell(python -m pytest tests/unit/test_survival.py -v 2>&1)"
+    ]
+  }
+}

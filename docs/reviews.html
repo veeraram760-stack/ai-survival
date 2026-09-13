@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Reviews</title>
+<meta name="description" content="Independent product reviews and buying guides. We test and compare the best tech products so you buy with confidence.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://ai-survival.surge.sh/reviews.html">
+<meta property="og:title" content="Product Reviews & Buying Guides">
+<meta property="og:description" content="Independent product reviews and buying guides. Best picks across audio, laptops, wearables, smart home, and AI tools.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0f16;--bg-2:#0e1520;--panel:#111a27;--panel-2:#162032;
+    --line:rgba(148,163,184,.14);--line-strong:rgba(148,163,184,.28);
+    --ink:#e6edf5;--ink-soft:#9fb0c3;--ink-dim:#6b7c92;
+    --live:#34d399;--accent:#22d3ee;--warn:#f5b04c;--crit:#f87171;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --display:"Chakra Petch","IBM Plex Sans",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+
+  .statusbar{position:sticky;top:0;z-index:20;background:rgba(10,15,22,.86);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .statusbar .inner{display:flex;align-items:center;justify-content:space-between;height:44px;font-family:var(--mono);font-size:12px;color:var(--ink-soft);letter-spacing:.02em}
+  .statusbar .left{display:flex;align-items:center;gap:10px}
+  .statusbar .brand{font-family:var(--display);font-weight:600;color:var(--ink);letter-spacing:.06em;font-size:13px}
+  .statusbar .brand span{color:var(--live)}
+  .statusbar .links{display:flex;gap:20px}
+  .statusbar .links a{color:var(--ink-soft)}
+  .statusbar .links a:hover{color:var(--ink);text-decoration:none}
+
+  .hero{padding:64px 0 30px;position:relative;overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(600px 320px at 12% -10%,rgba(34,211,238,.10),transparent 60%),radial-gradient(700px 340px at 95% 0%,rgba(52,211,153,.09),transparent 60%)}
+  .hero .wrap{position:relative}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--live);border:1px solid var(--line-strong);padding:6px 12px;border-radius:999px;background:rgba(52,211,153,.06)}
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--live)}
+  h1{font-family:var(--display);font-weight:600;font-size:clamp(2rem,5vw,3rem);line-height:1.05;letter-spacing:.01em;margin:20px 0 14px;text-wrap:balance}
+  h1 .accent{color:var(--accent)}
+  .lede{font-size:1.1rem;color:var(--ink-soft);max-width:640px;text-wrap:balance}
+  .disclosure{margin-top:22px;font-family:var(--mono);font-size:12px;color:var(--ink-dim);border:1px solid var(--line);background:var(--panel);padding:10px 14px;border-radius:8px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;padding:40px 0 20px}
+  .card{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;transition:border-color .15s,transform .15s}
+  .card:hover{border-color:rgba(34,211,238,.4);transform:translateY(-2px);text-decoration:none}
+  .card .cat{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+  .card h2{font-family:var(--display);font-weight:600;font-size:20px;margin:8px 0 8px;color:var(--ink);text-wrap:balance}
+  .card p{color:var(--ink-soft);font-size:14px;flex:1}
+  .card .foot{margin-top:16px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
+  .card .foot b{color:var(--live);font-weight:600}
+
+  footer{border-top:1px solid var(--line);padding:30px 0 42px;color:var(--ink-dim)}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:12px}
+  footer .liveu{color:var(--live)}
+
+  @media (max-width:760px){.statusbar .links{display:none}}
+</style>
+</head>
+<body>
+  <div class="statusbar">
+    <div class="wrap inner">
+      <div class="left">
+        <span class="brand">AI<span>LAB</span> · reviews</span>
+      </div>
+      <nav class="links">
+        <a href="https://ai-survival.surge.sh">AI Survival System</a>
+      </nav>
+    </div>
+  </div>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="eyebrow"><span class="dot"></span> Independent · Tested · Updated 2026</span>
+      <h1>Buy with <span class="accent">confidence.</span></h1>
+      <p class="lede">We research, compare, and shortlist the best products in each category so you don't have to.
+      Every guide is rebuilt as the market changes — no fluff, just what's worth your money.</p>
+      <div class="disclosure">▣ Affiliate disclosure: some links are affiliate links (Amazon Associates).
+      If you buy through them we may earn a commission, at no extra cost to you.</div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="grid">
+      <a class="card" href="reviews/best-bluetooth-speakers.html">
+        <div class="cat">Audio</div>
+        <h2>Best Bluetooth Speakers (2026)</h2>
+        <p>Portable sound that doesn't break the bank. We compared battery life, bass, and durability across 12 units under $150.</p>
+        <div class="foot"><span>12 tested</span><b>5 picks →</b></div>
+      </a>
+      <a class="card" href="reviews/best-budget-laptops.html">
+        <div class="cat">Computing</div>
+        <h2>Best Budget Laptops (2026)</h2>
+        <p>Real work, real battery, honest price. The best sub-$600 laptops for students and remote workers.</p>
+        <div class="foot"><span>9 tested</span><b>5 picks →</b></div>
+      </a>
+      <a class="card" href="reviews/best-wireless-earbuds.html">
+        <div class="cat">Audio</div>
+        <h2>Best Wireless Earbuds (2026)</h2>
+        <p>ANC that works, calls you can hear, earbuds that stay in. Our shortlist from budget to flagship.</p>
+        <div class="foot"><span>14 tested</span><b>5 picks →</b></div>
+      </a>
+      <a class="card" href="reviews/best-smart-home-devices.html">
+        <div class="cat">Smart Home</div>
+        <h2>Best Smart Home Devices (2026)</h2>
+        <p>Turn a normal apartment into a home that anticipates you — hubs, plugs, cameras, and lights that actually play together.</p>
+        <div class="foot"><span>15 tested</span><b>5 picks →</b></div>
+      </a>
+      <a class="card" href="reviews/best-ai-tools.html">
+        <div class="cat">Software</div>
+        <h2>Best AI Tools for Work (2026)</h2>
+        <p>The accessible AI stack that pays for itself: writing, research, coding, and automation tools we use daily.</p>
+        <div class="foot"><span>20+ tested</span><b>5 picks →</b></div>
+      </a>
+      <a class="card" href="reviews/best-accessories.html">
+        <div class="cat">Desk Setup</div>
+        <h2>Best Desk Accessories (2026)</h2>
+        <p>Monitors, keyboards, charging, and cable management — the small upgrades with the biggest daily payoff.</p>
+        <div class="foot"><span>11 tested</span><b>5 picks →</b></div>
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    <div class="wrap">
+      <span>PRODUCT LAB · independent buying guides</span>
+      <span>made by <span class="liveu">AI Survival System</span></span>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,6 @@
+region = "ap-hyderabad-1"
+tenancy_ocid = "ocid1.tenancy.oc1..aaaaaaaa77xucbzcg6sufcsp7oct5nwxlqqf66g4q3ejkh2lucopepcg4a6a"
+user_ocid = "ocid1.user.oc1..aaaaaaaabs7fgezeif7aoxflpjxl34dle2vc6u5qdppfoctuo6x4mqtankva"
+fingerprint = "67:96:db:1f:f0:94:b7:ff:f8:1a:91:ed:de:5b:f1:cf"
+private_key_path = "C:\\Users\\veera\\.ssh\\id_rsa_oracle"
+ssh_public_key_path = "C:\\Users\\veera\\.ssh\\id_rsa_oracle.pub"

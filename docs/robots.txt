@@ -1,0 +1,12 @@
+# AI Survival System - robots.txt
+# https://ai-survival.surge.sh
+
+User-agent: *
+Allow: /
+Disallow: /api/
+
+# Sitemaps
+Sitemap: https://ai-survival.surge.sh/sitemap.xml
+
+# Crawl-delay for polite bots
+Crawl-delay: 1

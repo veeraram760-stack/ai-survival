@@ -1,0 +1,13 @@
+# Terraform files
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# SSH keys
+*.pem
+*.ppk
+
+# OS generated files
+.DS_Store
+Thumbs.db

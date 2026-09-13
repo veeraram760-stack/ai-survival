@@ -1,0 +1,1001 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Survival System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0f16;
+    --bg-2:#0e1520;
+    --panel:#111a27;
+    --panel-2:#162032;
+    --line:rgba(148,163,184,.14);
+    --line-strong:rgba(148,163,184,.28);
+    --ink:#e6edf5;
+    --ink-soft:#9fb0c3;
+    --ink-dim:#6b7c92;
+    --live:#34d399;
+    --live-ink:#0a2b20;
+    --accent:#22d3ee;
+    --accent-ink:#083039;
+    --warn:#f5b04c;
+    --crit:#f87171;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --display:"Chakra Petch","IBM Plex Sans",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+  /* ---------- status bar ---------- */
+  .statusbar{
+    position:sticky;top:0;z-index:20;
+    background:rgba(10,15,22,.86);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .statusbar .inner{
+    display:flex;align-items:center;justify-content:space-between;
+    height:44px;font-family:var(--mono);font-size:12px;
+    color:var(--ink-soft);letter-spacing:.02em;
+  }
+  .statusbar .left{display:flex;align-items:center;gap:10px}
+  .statusbar .brand{font-family:var(--display);font-weight:600;color:var(--ink);letter-spacing:.06em;font-size:13px}
+  .statusbar .brand span{color:var(--live)}
+  .pulse{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--live);box-shadow:0 0 0 0 rgba(52,211,153,.55);
+    animation:pulse 2.2s infinite;
+  }
+  .pulse.off{background:var(--ink-dim);animation:none;box-shadow:none}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(52,211,153,.5)}
+    70%{box-shadow:0 0 0 7px rgba(52,211,153,0)}
+    100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}
+  }
+  .statusbar .links{display:flex;gap:20px}
+  .statusbar .links a{color:var(--ink-soft)}
+  .statusbar .links a:hover{color:var(--ink);text-decoration:none}
+
+  /* ---------- hero ---------- */
+  .hero{padding:72px 0 40px;position:relative;overflow:hidden}
+  .hero::before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      radial-gradient(600px 320px at 12% -10%, rgba(34,211,238,.10), transparent 60%),
+      radial-gradient(700px 340px at 95% 0%, rgba(52,211,153,.09), transparent 60%);
+  }
+  .hero .wrap{position:relative}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:var(--mono);font-size:12px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--live);
+    border:1px solid var(--line-strong);padding:6px 12px;border-radius:999px;
+    background:rgba(52,211,153,.06);
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--live)}
+  h1{
+    font-family:var(--display);font-weight:600;
+    font-size:clamp(2.4rem,6vw,4rem);line-height:1.02;
+    letter-spacing:.01em;margin:22px 0 18px;text-wrap:balance;
+  }
+  h1 .accent{color:var(--accent)}
+  h1 .liveu{color:var(--live)}
+  .lede{
+    font-size:1.18rem;color:var(--ink-soft);
+    max-width:660px;text-wrap:balance;
+  }
+  .lede b{color:var(--ink);font-weight:600}
+  .hero-meta{margin-top:30px;display:flex;flex-wrap:wrap;gap:10px 26px}
+  .hero-meta .m{display:flex;flex-direction:column}
+  .hero-meta .k{
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-dim);
+  }
+  .hero-meta .v{font-family:var(--mono);font-size:18px;color:var(--ink)}
+  .hero-meta .v em{color:var(--live);font-style:normal}
+
+  /* ---------- cloud oracle ---------- */
+  .oracle{padding:36px 0 0}
+  .oracle-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:28px 30px;position:relative;overflow:hidden;
+    transition:border-color .4s,box-shadow .4s;
+  }
+  .oracle-card::before{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:0;
+    transition:opacity .5s;border-radius:16px;
+    background:radial-gradient(ellipse 600px 280px at 50% 0%,rgba(34,211,238,.12),transparent 70%);
+  }
+  .oracle-card.connected{border-color:rgba(52,211,153,.35);box-shadow:0 0 40px -12px rgba(52,211,153,.18)}
+  .oracle-card.connected::before{opacity:1;background:radial-gradient(ellipse 600px 280px at 50% 0%,rgba(52,211,153,.10),transparent 70%)}
+  .oracle-card.disconnected{border-color:rgba(248,113,113,.25);box-shadow:0 0 40px -12px rgba(248,113,113,.12)}
+  .oracle-card.disconnected::before{opacity:1;background:radial-gradient(ellipse 600px 280px at 50% 0%,rgba(248,113,113,.08),transparent 70%)}
+  .oracle-card.checking{border-color:rgba(245,176,76,.3);box-shadow:0 0 40px -12px rgba(245,176,76,.12)}
+
+  .oracle-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .oracle-identity{display:flex;align-items:center;gap:16px}
+  .oracle-icon{
+    width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+    font-size:28px;flex-shrink:0;position:relative;
+    transition:background .4s,border-color .4s;
+  }
+  .oracle-icon.connected{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3)}
+  .oracle-icon.disconnected{background:rgba(248,113,113,.10);border:1px solid rgba(248,113,113,.25)}
+  .oracle-icon.checking{background:rgba(245,176,76,.10);border:1px solid rgba(245,176,76,.3)}
+  .oracle-icon .orb{
+    position:absolute;inset:-3px;border-radius:16px;
+    border:2px solid transparent;
+  }
+  .oracle-icon.connected .orb{border-top-color:var(--live);animation:orbSpin 1.6s linear infinite}
+  .oracle-icon.checking .orb{border-top-color:var(--warn);border-right-color:var(--warn);animation:orbSpin 1s linear infinite}
+  @keyframes orbSpin{to{transform:rotate(360deg)}}
+  .oracle-title{font-family:var(--display);font-weight:600;font-size:20px;color:var(--ink)}
+  .oracle-subtitle{font-family:var(--mono);font-size:12px;color:var(--ink-dim);margin-top:2px;letter-spacing:.02em}
+
+  .oracle-badge{
+    display:inline-flex;align-items:center;gap:7px;
+    font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.04em;
+    padding:6px 14px;border-radius:999px;border:1px solid;flex-shrink:0;
+  }
+  .oracle-badge.connected{color:var(--live);border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
+  .oracle-badge.disconnected{color:var(--crit);border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.07)}
+  .oracle-badge.checking{color:var(--warn);border-color:rgba(245,176,76,.35);background:rgba(245,176,76,.07)}
+  .oracle-badge .bdot{
+    width:7px;height:7px;border-radius:50%;display:inline-block;
+  }
+  .oracle-badge.connected .bdot{background:var(--live);box-shadow:0 0 6px rgba(52,211,153,.6)}
+  .oracle-badge.disconnected .bdot{background:var(--crit)}
+  .oracle-badge.checking .bdot{background:var(--warn);animation:blink 1s step-end infinite}
+  @keyframes blink{50%{opacity:.3}}
+
+  .oracle-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:22px}
+  .oracle-stat{
+    background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;
+  }
+  .oracle-stat .os-k{
+    font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);
+  }
+  .oracle-stat .os-v{
+    font-family:var(--mono);font-size:17px;font-weight:600;color:var(--ink);margin-top:5px;
+    font-variant-numeric:tabular-nums;
+  }
+  .oracle-stat .os-v.green{color:var(--live)}
+  .oracle-stat .os-v.red{color:var(--crit)}
+  .oracle-stat .os-v.amber{color:var(--warn)}
+  .oracle-stat .os-v.accent{color:var(--accent)}
+  .oracle-stat .os-sub{font-size:11px;color:var(--ink-dim);margin-top:3px;font-family:var(--mono)}
+
+  .oracle-retry{
+    margin-top:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  }
+  .oracle-retry button{
+    font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.06em;
+    padding:8px 18px;border-radius:8px;border:1px solid var(--line-strong);
+    background:var(--panel-2);color:var(--ink);cursor:pointer;
+    transition:all .15s;
+  }
+  .oracle-retry button:hover{background:var(--accent-ink);border-color:var(--accent);color:var(--accent)}
+  .oracle-retry button:active{transform:scale(.97)}
+  .oracle-retry .hint{font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
+
+  .oracle-source{
+    margin-top:14px;padding:12px 16px;border-radius:10px;
+    font-family:var(--mono);font-size:12px;display:flex;align-items:center;gap:10px;
+    border:1px solid var(--line);background:var(--bg-2);
+  }
+  .oracle-source .src-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .oracle-source .src-dot.live{background:var(--live);box-shadow:0 0 6px rgba(52,211,153,.5)}
+  .oracle-source .src-dot.sample{background:var(--warn)}
+  .oracle-source .src-label{color:var(--ink-soft)}
+  .oracle-source .src-label b{color:var(--ink);font-weight:600}
+
+  /* ---------- telemetry / live ---------- */
+  .live{padding:8px 0 56px}
+  .live-head{
+    display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:12px;margin-bottom:18px;
+  }
+  .live-head h2{font-family:var(--display);font-weight:500;font-size:20px;letter-spacing:.04em}
+  .live-head h2::before{content:"▰ ";color:var(--live)}
+  .live-tag{
+    font-family:var(--mono);font-size:12px;color:var(--ink-soft);
+    border:1px solid var(--line);padding:5px 11px;border-radius:999px;
+    background:var(--panel);display:flex;align-items:center;gap:8px;
+  }
+  .live-tag i{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .live-tag i.on{background:var(--live)}
+  .live-tag i.off{background:var(--warn)}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+  .kpi{
+    background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    border:1px solid var(--line);border-radius:12px;padding:18px 18px 16px;
+  }
+  .kpi .k{
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-dim);display:flex;align-items:center;justify-content:space-between;
+  }
+  .kpi .v{
+    font-family:var(--mono);font-size:30px;font-weight:600;color:var(--ink);
+    margin-top:8px;font-variant-numeric:tabular-nums;letter-spacing:-.01em;
+  }
+  .kpi .v small{font-size:15px;color:var(--ink-dim);font-weight:400}
+  .kpi .sub{font-size:12px;color:var(--ink-dim);margin-top:4px;font-family:var(--mono)}
+  .kpi.capital .v{color:var(--live)}
+  .kpi.agents .v{color:var(--accent)}
+  .kpi.full{grid-column:1/-1}
+
+  .mode{
+    margin-top:14px;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:16px 18px;
+    display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  }
+  .mode .lab{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)}
+  .mode .val{
+    font-family:var(--display);font-weight:600;font-size:26px;color:var(--live);
+    border:1px solid rgba(52,211,153,.4);background:rgba(52,211,153,.07);
+    padding:4px 14px;border-radius:8px;letter-spacing:.06em;
+  }
+  .mode .desc{color:var(--ink-soft);font-size:14px;flex:1;min-width:240px}
+  .mode .bars{display:flex;gap:26px;font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+  .mode .bars .bb{display:flex;flex-direction:column;gap:2px}
+  .mode .bars b{color:var(--ink);font-size:14px;font-variant-numeric:tabular-nums}
+
+  .sections-2{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-top:14px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .panel-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 18px;border-bottom:1px solid var(--line);
+  }
+  .panel-head h3{font-family:var(--display);font-weight:500;font-size:15px;letter-spacing:.03em}
+  .panel-head .cnt{font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
+  .rows{max-height:290px;overflow-y:auto}
+  .row{
+    display:flex;align-items:center;gap:12px;
+    padding:10px 18px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:13px;
+  }
+  .row:last-child{border-bottom:none}
+  .row .t{color:var(--ink);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .amt{color:var(--live);font-variant-numeric:tabular-nums}
+  .row .amt.down{color:var(--crit)}
+  .row .when{color:var(--ink-dim);font-size:11px}
+  .row .who{color:var(--ink-soft);font-size:12px;min-width:90px}
+  .pill{
+    font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+    padding:2px 8px;border-radius:999px;border:1px solid var(--line-strong);color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .pill.good{color:var(--live);border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.07)}
+  .pill.warn{color:var(--warn);border-color:rgba(245,176,76,.4);background:rgba(245,176,76,.06)}
+  .pill.crit{color:var(--crit);border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.06)}
+  .pill.accent{color:var(--accent);border-color:rgba(34,211,238,.4);background:rgba(34,211,238,.06)}
+
+  .agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  .agent{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;
+    transition:border-color .15s,transform .15s;
+  }
+  .agent:hover{border-color:var(--line-strong);transform:translateY(-1px)}
+  .agent .ah{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .agent .nm{font-family:var(--display);font-weight:600;font-size:16px;color:var(--ink)}
+  .agent .ty{font-family:var(--mono);font-size:11px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+  .agent .st{font-family:var(--mono);font-size:11px}
+  .agent .row-meta{margin-top:10px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+
+  /* ---------- overview ---------- */
+  .section{padding:60px 0;border-top:1px solid var(--line)}
+  .section .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .section h2{font-family:var(--display);font-weight:600;font-size:clamp(1.7rem,3.5vw,2.4rem);margin:10px 0 14px;letter-spacing:.01em;text-wrap:balance}
+  .section .sub{color:var(--ink-soft);max-width:700px;text-wrap:balance}
+  .lead-copy{display:grid;grid-template-columns:1.5fr 1fr;gap:34px;margin-top:28px}
+  .lead-copy p{color:var(--ink-soft);margin-bottom:14px}
+  .lead-copy strong{color:var(--ink)}
+
+  .boxes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:30px}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .box .n{font-family:var(--display);font-weight:600;font-size:18px;color:var(--accent);display:flex;align-items:center;gap:8px}
+  .box .n b{font-family:var(--mono);color:var(--ink-dim);font-weight:400;font-size:12px}
+  .box p{font-size:13.5px;color:var(--ink-soft);margin-top:8px}
+
+  /* survival loop */
+  .loop{display:grid;gap:0;margin-top:30px}
+  .loop-item{display:grid;grid-template-columns:56px 1fr;gap:18px;padding:18px 0;border-top:1px solid var(--line)}
+  .loop-item:first-child{border-top:none}
+  .loop-item .step{font-family:var(--display);font-weight:600;font-size:26px;color:var(--ink-dim)}
+  .loop-item .step b{color:var(--live)}
+  .loop-item h3{font-family:var(--display);font-weight:600;font-size:18px}
+  .loop-item p{color:var(--ink-soft);font-size:14px;max-width:720px}
+
+  .stack{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+  .stack .s{
+    font-family:var(--mono);font-size:13px;color:var(--ink-soft);
+    border:1px solid var(--line-strong);border-radius:8px;padding:7px 13px;background:var(--panel);
+  }
+  .stack .s b{color:var(--ink);font-weight:600}
+  .stack .s em{color:var(--accent);font-style:normal}
+
+  .code{
+    margin-top:28px;background:#070b11;border:1px solid var(--line);
+    border-radius:12px;overflow:hidden;
+  }
+  .code .bar{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);align-items:center}
+  .code .bar .dotb{width:11px;height:11px;border-radius:50%;background:#2a3647}
+  .code .bar .fname{font-family:var(--mono);font-size:12px;color:var(--ink-dim);margin-left:8px}
+  .code pre{overflow-x:auto;padding:18px 20px;font-family:var(--mono);font-size:13px;line-height:1.7;color:#c9d6e4}
+  .code .cm{color:#5b6b80}
+  .code .k{color:#7dd3fc}
+  .code .s{color:#86efac}
+  .code .num{color:#f5b04c}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:30px}
+  .callout{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line-strong);border-radius:12px;padding:22px}
+  .callout h3{font-family:var(--display);font-weight:600;font-size:18px;display:flex;align-items:center;gap:10px}
+  .callout p{color:var(--ink-soft);font-size:14px;margin-top:8px}
+  .callout ul{margin:12px 0 0 18px;color:var(--ink-soft);font-size:14px}
+
+  footer{border-top:1px solid var(--line);padding:34px 0 48px;color:var(--ink-dim)}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+  footer .mono{font-family:var(--mono);font-size:12px}
+  footer .liveu{color:var(--live)}
+
+  @media (max-width:760px){
+    .lead-copy,.grid-2{grid-template-columns:1fr}
+    .sections-2{grid-template-columns:1fr}
+    .statusbar .links{display:none}
+  }
+</style>
+</head>
+<body>
+
+  <div class="statusbar">
+    <div class="wrap inner">
+      <div class="left">
+        <span class="pulse" id="hb-dot"></span>
+        <span class="brand">AI<span>SURVIVAL</span></span>
+        <span id="hb-text">standby</span>
+      </div>
+      <nav class="links">
+        <a href="#telemetry">Telemetry</a>
+        <a href="#agents">Agents</a>
+        <a href="#overview">Overview</a>
+        <a href="#system">System</a>
+        <a href="#run">Run it</a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <header class="hero" id="top">
+    <div class="wrap">
+      <span class="eyebrow"><span class="dot"></span> Autonomous · Self-funding · Resilient</span>
+      <h1>An AI business that must<br>survive <span class="accent">from $50</span> — <span class="liveu">and grow.</span></h1>
+      <p class="lede">
+        <b>AI Survival</b> is an autonomous <b>multi-agent</b> system that starts with <b>$50</b> of real capital and
+        has to earn its way forward. A <b>CEO agent</b> allocates resources, a <b>Risk Manager</b> holds the line,
+        and a population of <b>specialized agents</b> research, publish, sell, and reproduce — each birth paid for
+        by profits it must justify.
+      </p>
+      <div class="hero-meta">
+        <div class="m"><span class="k">Starting capital</span><span class="v"><em>$50.00</em></span></div>
+        <div class="m"><span class="k">Agent classes</span><span class="v">12</span></div>
+        <div class="m"><span class="k">Oversight</span><span class="v">CEO + Risk&nbsp;Mgr</span></div>
+        <div class="m"><span class="k">Mode</span><span class="v" id="modebar0">GROWTH</span></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CLOUD ORACLE -->
+  <section class="oracle" id="oracle">
+    <div class="wrap">
+      <div class="oracle-card" id="oracle-card">
+        <div class="oracle-top">
+          <div class="oracle-identity">
+            <div class="oracle-icon" id="oracle-icon">
+              <div class="orb"></div>
+              ☁️
+            </div>
+            <div>
+              <div class="oracle-title">Cloud Oracle</div>
+              <div class="oracle-subtitle" id="oracle-endpoint">checking endpoint…</div>
+            </div>
+          </div>
+          <span class="oracle-badge" id="oracle-badge"><span class="bdot"></span><span id="oracle-badge-text">INIT</span></span>
+        </div>
+
+        <div class="oracle-grid">
+          <div class="oracle-stat">
+            <div class="os-k">Status</div>
+            <div class="os-v" id="os-status">—</div>
+            <div class="os-sub" id="os-status-sub">waiting for first check</div>
+          </div>
+          <div class="oracle-stat">
+            <div class="os-k">Latency</div>
+            <div class="os-v" id="os-latency">—</div>
+            <div class="os-sub">round-trip to backend</div>
+          </div>
+          <div class="oracle-stat">
+            <div class="os-k">Uptime</div>
+            <div class="os-v" id="os-uptime">—</div>
+            <div class="os-sub" id="os-uptime-sub">since page load</div>
+          </div>
+          <div class="oracle-stat">
+            <div class="os-k">Checks</div>
+            <div class="os-v accent" id="os-checks">0</div>
+            <div class="os-sub" id="os-checks-sub">total probes sent</div>
+          </div>
+        </div>
+
+        <div class="oracle-source" id="oracle-source">
+          <span class="src-dot sample" id="src-dot"></span>
+          <span class="src-label" id="src-label">Data source: <b>sample dataset</b> — backend offline</span>
+        </div>
+
+        <div class="oracle-retry" id="oracle-retry">
+          <button id="retry-btn" onclick="window.__oracleCheck&&window.__oracleCheck()">⟳ Reconnect</button>
+          <span class="hint">checks every 8 seconds automatically</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TELEMETRY -->
+  <section class="live" id="telemetry">
+    <div class="wrap">
+      <div class="live-head">
+        <h2>Live telemetry</h2>
+        <span class="live-tag"><i id="tl-dot" class="off"></i><span id="tl-text">connecting…</span></span>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi capital">
+          <div class="k"><span>Capital</span><span>USD</span></div>
+          <div class="v" id="k-capital">$—</div>
+          <div class="sub" id="k-capital-sub">&nbsp;</div>
+        </div>
+        <div class="kpi agents">
+          <div class="k"><span>Agent population</span></div>
+          <div class="v" id="k-agents">—</div>
+          <div class="sub"><span id="k-active"></span></div>
+        </div>
+        <div class="kpi">
+          <div class="k"><span>Real revenue</span></div>
+          <div class="v" id="k-real">$—</div>
+          <div class="sub">earned, not simulated</div>
+        </div>
+        <div class="kpi">
+          <div class="k"><span>Reserve</span></div>
+          <div class="v" id="k-reserve">—</div>
+          <div class="sub">survival cushion</div>
+        </div>
+      </div>
+
+      <div class="mode">
+        <span class="lab">Current mode</span>
+        <span class="val" id="mode-val">GROWTH</span>
+        <div class="desc" id="mode-desc">System is reinvesting earnings into new experiments and agents.</div>
+        <div class="bars">
+          <div class="bb"><span>Operating</span><b id="bar-operating">—</b></div>
+          <div class="bb"><span>Growth</span><b id="bar-growth">—</b></div>
+          <div class="bb"><span>Expenses</span><b id="bar-expenses">—</b></div>
+        </div>
+      </div>
+
+      <div class="sections-2">
+        <div class="panel">
+          <div class="panel-head"><h3>Activity</h3><span class="cnt" id="tx-cnt">0</span></div>
+          <div class="rows" id="tx-rows">
+            <div class="row"><span class="when">—</span><span class="t" style="color:var(--ink-dim)">awaiting data…</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Agent roster</h3><span class="cnt" id="ag-cnt">0</span></div>
+          <div class="rows" id="ag-rows">
+            <div class="row"><span class="t" style="color:var(--ink-dim)">awaiting data…</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AGENTS -->
+  <section class="section" id="agents">
+    <div class="wrap">
+      <span class="kicker">The population</span>
+      <h2>Twelve roles, one mandate: stay alive and compound</h2>
+      <p class="sub">Agents aren't static tools — they operate, earn, and can reproduce. When an agent proves profitable,
+      the Factory can instantiate a child, and the new agent's creation cost is charged against profit. Underperformers are retired.</p>
+      <div class="agents-grid" id="agent-grid">
+        <!-- rendered by JS (sample) -->
+      </div>
+    </div>
+  </section>
+
+  <!-- OVERVIEW -->
+  <section class="section" id="overview">
+    <div class="wrap">
+      <span class="kicker">What it is</span>
+      <h2>An economy, not a script</h2>
+      <div class="lead-copy">
+        <div>
+          <p>
+            Most "AI agents" are one prompt wrapped in a loop. <strong>AI Survival</strong> is closer to a small
+            self-owning company: separate agents with distinct jobs, a ledger every spend flows through, and
+            independent risk review that can veto a decision the CEO wants to make.
+          </p>
+          <p>
+            Capital is split by <strong>survival ratios</strong> — a reserve cushion, an operating budget, and a
+            growth pool. The system refuses to spend its lifeline on experiments. Every agent action is logged as a
+            <strong>transaction</strong> in a single ledger, so the whole thing can be audited start to finish.
+          </p>
+          <p>
+            It runs in <strong>simulation mode</strong> by default; real money only moves when explicitly configured.
+            Revenue can be <em>simulated</em> (paper) or <em>real</em> (live affiliate / product / payment events),
+            and the dashboard keeps the two strictly separate.
+          </p>
+        </div>
+        <div class="callout">
+          <h3><span class="pulse" style="animation:none;background:var(--live)"></span>The survival loop</h3>
+          <p>Each cycle, in order:</p>
+          <ul>
+            <li>Agents earn (content, affiliate, sales, product)</li>
+            <li>Finance posts every dollar to the ledger</li>
+            <li>CEO allocates toward reserve / operating / growth</li>
+            <li>Risk Manager reviews spend above threshold</li>
+            <li>Factory spawns children if ROI ≥ 1.5× &amp; profit ≥ $10</li>
+            <li>Learning agent folds results back into memory</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="loop">
+        <div class="loop-item">
+          <div class="step"><b>01</b></div>
+          <div>
+            <h3>Earn</h3>
+            <p>Research finds opportunities; Content publishes across channels; Affiliate and Sales convert;
+            the Digital Product agent builds and sells. Each channel posts real or simulated revenue to the ledger.</p>
+          </div>
+        </div>
+        <div class="loop-item">
+          <div class="step"><b>02</b></div>
+          <div>
+            <h3>Govern</h3>
+            <p>&nbsp;No spend is free. The CEO allocates within survival ratios; the independent Risk Manager
+            screens decisions above threshold and can block them. Guardrails cap daily compute cost and single-spend size.</p>
+          </div>
+        </div>
+        <div class="loop-item">
+          <div class="step"><b>03</b></div>
+          <div>
+            <h3>Learn</h3>
+            <p>The Experiment agent runs A/B hypotheses against a budget; the Learning agent stores what worked as
+            memory with confidence. Knowledge compounds — future agents start smarter than their parents.</p>
+          </div>
+        </div>
+        <div class="loop-item">
+          <div class="step"><b>04</b></div>
+          <div>
+            <h3>Reproduce</h3>
+            <p>A profitable agent earns the right to reproduce. The Factory charges its creation cost against profit,
+            and the new agent inherits strategy and memory. Over time, a lineage trades — evolving like a population.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="boxes">
+        <div class="box"><span class="n"><b>></b>Resilience</span><p>Survival ratios hold a reserve so one bad week can't sink the system. Daily and weekly loss limits trip emergency modes.</p></div>
+        <div class="box"><span class="n"><b>></b>Accountability</span><p>A single capital ledger records every transaction. Anything is auditable from the founding $50 to the latest trade.</p></div>
+        <div class="box"><span class="n"><b>></b>Evolution</span><p>Agents that earn are cloned; agents that fail are retired. The population adapts without human intervention.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SYSTEM -->
+  <section class="section" id="system">
+    <div class="wrap">
+      <span class="kicker">Under the hood</span>
+      <h2>Built to be observable</h2>
+      <p class="sub">A REST API exposes capital, agents, transactions, decisions, experiments, risk events, and learned
+      memory — which is exactly the surface this dashboard reads from.</p>
+      <div class="grid-2">
+        <div class="callout">
+          <h3>Architecture</h3>
+          <ul>
+            <li><b>FastAPI + SQLAlchemy</b> — async backend, single source of truth</li>
+            <li><b>Redis + Celery</b> — task queue for runs and promotions</li>
+            <li><b>Modal</b> — on-demand GPU for heavy AI workloads</li>
+            <li><b>React + Vite + Recharts</b> — the operator dashboard</li>
+            <li><b>Docker Compose</b> — one-command local stack</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <h3>Guardrails (from config)</h3>
+          <ul>
+            <li>Max daily compute cost — <span class="mono" style="font-family:var(--mono)">$5.00</span></li>
+            <li>Max single spend — <span class="mono" style="font-family:var(--mono)">$2.00</span></li>
+            <li>Survival reserve ratio — <span class="mono" style="font-family:var(--mono)">25%</span></li>
+            <li>Reproduce at ROI ≥ 1.5× &amp; profit ≥ $10</li>
+            <li>Population cap — 100 soft / 1000 hard</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RUN -->
+  <section class="section" id="run">
+    <div class="wrap">
+      <span class="kicker">Get started</span>
+      <h2>Run it yourself</h2>
+      <p class="sub">The whole system lives in one repo. Simulation mode is the default — <b>no real money is spent</b> until you explicitly configure payment and payout channels.</p>
+      <div class="code">
+        <div class="bar">
+          <span class="dotb"></span><span class="dotb"></span><span class="dotb"></span>
+          <span class="fname">terminal</span>
+        </div>
+        <pre><span class="cm"># install deps, run tests, start dev</span>
+<span class="k">make</span> install
+<span class="k">make</span> test
+<span class="k">make</span> dev
+
+<span class="cm"># configure keys in .env (copy from .env.example)</span>
+<span class="k">cp</span> .env.example .env    <span class="cm"># OPENAI_API_KEY, ANTHROPIC_API_KEY, MODAL_TOKEN…</span>
+
+<span class="cm"># full stack with docker</span>
+<span class="k">docker compose up</span> --build
+
+<span class="cm"># dashboard</span>
+<span class="cm"># http://localhost:3000 · backend http://localhost:8000/api/v1</span></pre>
+      </div>
+      <div class="stack">
+        <span class="s"><b>Backend</b> · FastAPI</span>
+        <span class="s"><b>DB</b> · PostgreSQL / SQLite</span>
+        <span class="s"><b>Queue</b> · Redis + Celery</span>
+        <span class="s"><b>GPU</b> · Modal</span>
+        <span class="s"><b>UI</b> · React + Vite</span>
+        <span class="s"><b>Ship</b> · Docker Compose</span>
+        <span class="s"><em>status</em> · simulation-safe</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <span class="mono">AI SURVIVAL · autonomous multi-agent business system</span>
+      <span class="mono">heartbeat <span class="liveu" id="foot-hb">●</span> <span id="foot-time">—</span></span>
+    </div>
+  </footer>
+
+<script>
+(function(){
+  "use strict";
+  var API_BASE = (typeof API_BASE_URL !== 'undefined' && API_BASE_URL) ? API_BASE_URL : "http://localhost:8000/api/v1";
+  var MAX_TX = 8;
+  var POLL_INTERVAL = 8000;
+
+  var $ = function(id){ return document.getElementById(id); };
+
+  // ---- SAMPLE dataset (clearly labeled) ----
+  var SAMPLE = {
+    health: {status: "offline"},
+    capital: {
+      capital: 74.32, reserve: 18.58, operating: 49.30, growth: 6.44,
+      real_revenue: 22.10, real_expenses: 0.00,
+      simulated_revenue: 63.85, simulated_expenses: 11.63
+    },
+    state: {
+      current_mode: "GROWTH", capital: 74.32, reserve: 18.58, operating: 49.30, growth: 6.44,
+      total_agents: 12, active_agents: 9, daily_loss: 0.00, weekly_loss: 1.24
+    },
+    transactions: [
+      {action:"affiliate_commission", category:"real_revenue", amount:5.20, status:"COMPLETED", timestamp:new Date(Date.now()-40*6e4).toISOString(), agent_id:"SA"},
+      {action:"content_publish", category:"simulated_revenue", amount:2.40, status:"COMPLETED", timestamp:new Date(Date.now()-95*6e4).toISOString(), agent_id:"CO"},
+      {action:"spawn_agent", category:"simulated_expense", amount:-3.50, status:"APPROVED", timestamp:new Date(Date.now()-130*6e4).toISOString(), agent_id:"FA"},
+      {action:"experiment_budget", category:"simulated_expense", amount:-2.00, status:"APPROVED", timestamp:new Date(Date.now()-180*6e4).toISOString(), agent_id:"EX"},
+      {action:"sales_lead", category:"simulated_revenue", amount:4.10, status:"COMPLETED", timestamp:new Date(Date.now()-240*6e4).toISOString(), agent_id:"SA"},
+      {action:"affiliate_commission", category:"real_revenue", amount:2.85, status:"COMPLETED", timestamp:new Date(Date.now()-310*6e4).toISOString(), agent_id:"AF"}
+    ],
+    agents: [
+      {agent_type:"CEO",         status:"ACTIVE",   strategy:"reinforce_winners",  children:1},
+      {agent_type:"Research",    status:"ACTIVE",   strategy:"trend_following",   children:2},
+      {agent_type:"Content",     status:"ACTIVE",   strategy:"seo_longtail",      children:2},
+      {agent_type:"Affiliate",   status:"ACTIVE",   strategy:"niche_affiliate",   children:2},
+      {agent_type:"Sales",       status:"ACTIVE",   strategy:"outbound_value",    children:1},
+      {agent_type:"Finance",     status:"ACTIVE",   strategy:"lean_budget",       children:0},
+      {agent_type:"Risk Manager",status:"ACTIVE",   strategy:"guardrail_ratios",  children:0},
+      {agent_type:"Digital Product",status:"IDLE",  strategy:"micro_products",    children:0},
+      {agent_type:"Market",      status:"ACTIVE",   strategy:"paper_trading",     children:0},
+      {agent_type:"Experiment",  status:"ACTIVE",   strategy:"a_b_testing",       children:1},
+      {agent_type:"Learning",    status:"ACTIVE",   strategy:"memory_compounding",children:0},
+      {agent_type:"Factory",     status:"ACTIVE",   strategy:"reproduce_winners", children:3}
+    ]
+  };
+
+  var AGENT_DESC = {
+    Research:"Market research and opportunity discovery",
+    Affiliate:"Affiliate marketing placements",
+    Sales:"Lead generation and outreach",
+    "Digital Product":"Product creation and sales",
+    Market:"Market analysis and paper trading",
+    Experiment:"Hypothesis testing with budget",
+    Factory:"Agent creation and mutation"
+  };
+
+  var MODE_DESC = {
+    "GROWTH":"System is reinvesting earnings into new experiments and agents.",
+    "SURVIVAL":"System is conserving capital and cutting spend to protect the reserve.",
+    "EXPERIMENTAL":"System is deliberately taking bounded risks to find new revenue."
+  };
+
+  /* ---- Oracle state ---- */
+  var oracleState = {
+    connected: false,
+    checks: 0,
+    consecutiveOk: 0,
+    consecutiveFail: 0,
+    lastLatency: null,
+    lastCheck: null,
+    wasConnected: null,
+    pageLoad: Date.now()
+  };
+
+  function fmt$(n){ return "$" + (n==null?0:n).toFixed(2); }
+  function short(str){ return (str||"").charAt(0).toUpperCase() + (str||"").slice(1,14); }
+
+  function fmtDuration(ms){
+    var s = Math.floor(ms/1000);
+    if(s<60) return s+"s";
+    var m=Math.floor(s/60); s=s%60;
+    if(m<60) return m+"m "+s+"s";
+    var h=Math.floor(m/60); m=m%60;
+    return h+"h "+m+"m";
+  }
+
+  function api(path){
+    return fetch(API_BASE + path, {method:"GET"})
+      .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); });
+  }
+
+  function setStatus(on, text){
+    $("hb-dot").className = "pulse" + (on?"":" off");
+    $("tl-dot").className = on?"on":"off";
+    $("hb-text").textContent = text;
+    $("tl-text").textContent = text;
+  }
+
+  /* ---- Oracle UI updates ---- */
+  function setOracleUI(state){
+    var card = $("oracle-card");
+    var icon = $("oracle-icon");
+    var badge = $("oracle-badge");
+    var cls = state==="connected"?"connected":state==="checking"?"checking":"disconnected";
+
+    card.className = "oracle-card " + cls;
+    icon.className = "oracle-icon " + cls;
+    badge.className = "oracle-badge " + cls;
+
+    if(state==="connected"){
+      $("oracle-badge-text").textContent = "CONNECTED";
+      $("os-status").textContent = "ONLINE";
+      $("os-status").className = "os-v green";
+      $("os-status-sub").textContent = "oracle responding normally";
+      $("oracle-endpoint").textContent = API_BASE;
+      $("src-dot").className = "src-dot live";
+      $("src-label").innerHTML = "Data source: <b>live API</b> — real-time backend";
+    } else if(state==="checking"){
+      $("oracle-badge-text").textContent = "CHECKING";
+      $("os-status").textContent = "PROBING";
+      $("os-status").className = "os-v amber";
+      $("os-status-sub").textContent = "sending health check…";
+    } else {
+      $("oracle-badge-text").textContent = "OFFLINE";
+      $("os-status").textContent = "DISCONNECTED";
+      $("os-status").className = "os-v red";
+      $("os-status-sub").textContent = "backend unreachable";
+      $("oracle-endpoint").textContent = API_BASE + " — unreachable";
+      $("src-dot").className = "src-dot sample";
+      $("src-label").innerHTML = "Data source: <b>sample dataset</b> — backend offline";
+    }
+  }
+
+  function updateOracleStats(latency, ok){
+    oracleState.checks++;
+    oracleState.lastCheck = new Date();
+    if(ok){
+      oracleState.consecutiveOk++;
+      oracleState.consecutiveFail = 0;
+      oracleState.lastLatency = latency;
+      oracleState.connected = true;
+    } else {
+      oracleState.consecutiveOk = 0;
+      oracleState.consecutiveFail++;
+      if(oracleState.consecutiveFail >= 2) oracleState.connected = false;
+    }
+
+    $("os-latency").textContent = oracleState.lastLatency != null ? oracleState.lastLatency + "ms" : "—";
+    $("os-latency").className = "os-v" + (oracleState.lastLatency != null ? (oracleState.lastLatency < 500 ? " green" : oracleState.lastLatency < 1500 ? " amber" : " red") : "");
+    $("os-checks").textContent = oracleState.checks;
+    $("os-uptime").textContent = fmtDuration(Date.now() - oracleState.pageLoad);
+  }
+
+  function oracleCheck(){
+    setOracleUI("checking");
+    var t0 = performance.now();
+    api("/capital").then(function(){
+      var latency = Math.round(performance.now() - t0);
+      updateOracleStats(latency, true);
+
+      if(oracleState.wasConnected !== true){
+        oracleState.wasConnected = true;
+        setOracleUI("connected");
+      } else {
+        setOracleUI("connected");
+      }
+      renderLiveData();
+    }).catch(function(){
+      var latency = Math.round(performance.now() - t0);
+      updateOracleStats(latency, false);
+      oracleState.wasConnected = false;
+      setOracleUI("disconnected");
+      renderSample();
+    });
+  }
+  window.__oracleCheck = oracleCheck;
+
+  function renderSample(){
+    var s = SAMPLE;
+    setStatus(false, "offline — sample");
+
+    $("modebar0").textContent = s.state.current_mode;
+    $("mode-val").textContent = s.state.current_mode;
+    $("mode-desc").textContent = MODE_DESC[s.state.current_mode] || MODE_DESC.GROWTH;
+
+    $("k-capital").textContent = fmt$(s.capital.capital);
+    $("k-capital-sub").textContent = "reserve " + fmt$(s.capital.reserve) + " · growth " + fmt$(s.capital.growth);
+    $("k-agents").textContent = s.state.total_agents;
+    $("k-active").textContent = s.state.active_agents + " active";
+    $("k-real").textContent = fmt$(s.capital.real_revenue);
+    $("k-reserve").textContent = fmt$(s.capital.reserve);
+
+    $("bar-operating").textContent = fmt$(s.capital.operating);
+    $("bar-growth").textContent = fmt$(s.capital.growth);
+    $("bar-expenses").textContent = fmt$(s.capital.simulated_expenses + s.capital.real_expenses);
+
+    $("tx-cnt").textContent = s.transactions.length + " recent";
+    var txEl = $("tx-rows"); txEl.innerHTML = "";
+    s.transactions.slice(0, MAX_TX).forEach(function(t){
+      var d = new Date(t.timestamp);
+      var div = document.createElement("div");
+      div.className = "row";
+      var up = t.amount > 0;
+      div.innerHTML =
+        '<span class="when">' + d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}) + '</span>' +
+        '<span class="who">' + short(t.agent_id) + '</span>' +
+        '<span class="t">' + short(t.action) + '</span>' +
+        '<span class="pill ' + (up?"good":"warn") + '">' + (t.status||"").toLowerCase() + '</span>' +
+        '<span class="amt' + (up?"":" down") + '">' + (up?"+":"−") + fmt$(Math.abs(t.amount)).slice(1) + '</span>';
+      txEl.appendChild(div);
+    });
+
+    $("ag-cnt").textContent = s.state.active_agents + " active / " + s.state.total_agents;
+    var agEl = $("ag-rows"); agEl.innerHTML = "";
+    s.agents.slice(0,8).forEach(function(a){
+      var div = document.createElement("div");
+      div.className = "row";
+      div.innerHTML =
+        '<span class="t">' + a.agent_type + '</span>' +
+        '<span class="pill ' + (a.status==="ACTIVE"?"good":"crit") + '">' + a.status.toLowerCase() + '</span>' +
+        '<span class="when">' + (a.children? a.children+" child" : "leaf") + '</span>';
+      agEl.appendChild(div);
+    });
+
+    var grid = $("agent-grid"); grid.innerHTML = "";
+    s.agents.forEach(function(a){
+      var el = document.createElement("div");
+      el.className = "agent";
+      var desc = AGENT_DESC[a.agent_type] || "Specialized operating agent";
+      el.innerHTML =
+        '<div class="ah"><span class="nm">' + a.agent_type + '</span>' +
+        '<span class="pill ' + (a.status==="ACTIVE"?"good":"warn") + ' st">' + a.status + '</span></div>' +
+        '<div class="ty">' + a.strategy + '</div>' +
+        '<div style="margin-top:8px;color:var(--ink-soft);font-size:13px">' + desc + '</div>' +
+        '<div class="row-meta"><span>lineage ' + (a.children+1) + '</span><span>' + (a.children? a.children+" child":"no children") + '</span></div>';
+      grid.appendChild(el);
+    });
+  }
+
+  function renderLiveData(){
+    Promise.all([
+      api("/capital"),
+      api("/system/state"),
+      api("/transactions"),
+      api("/agents")
+    ]).then(function(res){
+      var cap = res[0], state = res[1], tx = res[2] || [], agents = res[3] || [];
+      setStatus(true, "live · connected");
+
+      $("modebar0").textContent = state.current_mode || "GROWTH";
+      $("mode-val").textContent = state.current_mode || "GROWTH";
+      $("mode-desc").textContent = MODE_DESC[state.current_mode] || MODE_DESC.GROWTH;
+
+      $("k-capital").textContent = fmt$(cap.capital);
+      $("k-capital-sub").textContent = "reserve " + fmt$(cap.reserve!==undefined?cap.reserve:state.reserve) + " · growth " + fmt$(state.growth);
+      $("k-agents").textContent = state.total_agents || agents.length;
+      $("k-active").textContent = (state.active_agents!==undefined?state.active_agents:agents.filter(function(a){return (a.status||"").toUpperCase()==="ACTIVE";}).length) + " active";
+      $("k-real").textContent = fmt$(cap.real_revenue);
+      $("k-reserve").textContent = fmt$(cap.reserve!==undefined?cap.reserve:state.reserve);
+
+      $("bar-operating").textContent = fmt$(cap.operating !== undefined ? cap.operating : state.operating);
+      $("bar-growth").textContent = fmt$(state.growth);
+      $("bar-expenses").textContent = fmt$((cap.real_expenses||0) + (cap.simulated_expenses||0));
+
+      $("tx-cnt").textContent = tx.length + " recent";
+      var txEl = $("tx-rows"); txEl.innerHTML = "";
+      (tx.slice(0,MAX_TX)).forEach(function(t){
+        var div = document.createElement("div"); div.className="row";
+        var up = t.amount > 0;
+        var when = t.timestamp ? new Date(t.timestamp) : new Date();
+        div.innerHTML =
+          '<span class="when">' + (isNaN(when)? "—" : when.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})) + '</span>' +
+          '<span class="who">' + short(t.agent_id) + '</span>' +
+          '<span class="t">' + short(t.action) + '</span>' +
+          '<span class="pill ' + (up?"good":"warn") + '">' + (t.status||"").toLowerCase() + '</span>' +
+          '<span class="amt' + (up?"":" down") + '">' + (up?"+":"−") + fmt$(Math.abs(t.amount)).slice(1) + '</span>';
+        txEl.appendChild(div);
+      });
+
+      $("ag-cnt").textContent = agents.length + " on roster";
+      var agEl = $("ag-rows"); agEl.innerHTML = "";
+      var active = agents.filter(function(a){return (a.status||"").toUpperCase()==="ACTIVE";});
+      (active.length?active:agents).slice(0,8).forEach(function(a){
+        var div=document.createElement("div"); div.className="row";
+        div.innerHTML =
+          '<span class="t">' + (a.agent_type||a.type||a.id) + '</span>' +
+          '<span class="pill ' + ((a.status||"ACTIVE").toUpperCase()==="ACTIVE"?"good":"crit") + '">' + (a.status||"active").toLowerCase() + '</span>' +
+          '<span class="when">' + short(a.strategy||"") + '</span>';
+        agEl.appendChild(div);
+      });
+
+      var grid = $("agent-grid"); grid.innerHTML="";
+      agents.forEach(function(a){
+        var el=document.createElement("div"); el.className="agent";
+        var st=(a.status||"ACTIVE").toUpperCase();
+        el.innerHTML =
+          '<div class="ah"><span class="nm">' + (a.agent_type||a.type||a.id) + '</span>' +
+          '<span class="pill ' + (st==="ACTIVE"?"good":st==="IDLE"?"warn":"crit") + ' st">' + st + '</span></div>' +
+          '<div class="ty">' + (a.strategy||"operating agent") + '</div>' +
+          '<div class="row-meta"><span>id ' + short(a.id) + '</span><span>' + (a.capabilities&&a.capabilities.length? a.capabilities.length+" caps":"") + '</span></div>';
+        grid.appendChild(el);
+      });
+    }).catch(function(){});
+  }
+
+  /* ---- Boot ---- */
+  oracleCheck();
+  setInterval(oracleCheck, POLL_INTERVAL);
+
+  /* ---- Uptime ticker ---- */
+  var t = $("foot-time");
+  function tick(){
+    t.textContent = new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+    if(oracleState.lastCheck) $("os-uptime").textContent = fmtDuration(Date.now() - oracleState.pageLoad);
+  }
+  tick(); setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>

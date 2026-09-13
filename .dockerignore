@@ -1,0 +1,23 @@
+# Local artifacts — don't ship
+.git
+.gitignore
+__pycache__
+**/__pycache__
+*.pyc
+.env
+*.db
+*.db-shm
+*.db-wal
+node_modules
+dashboard/dist
+dashboard/node_modules
+docs
+tools
+*.vsix
+Dockerfile
+Dockerfile.prod
+Dockerfile.oracle
+deploy.sh
+test_*.py
+check_*.py
+.tmp
