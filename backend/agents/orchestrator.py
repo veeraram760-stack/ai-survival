@@ -20,7 +20,7 @@ logger = logging.getLogger("ai_survival.orchestrator")
 
 
 class AgentOrchestrator:
-    def __init__(self, capital_ledger, risk_manager, ceo: Optional[Any] = None, revenue_engine: Optional[RevenueEngine] = None, execution_engine: Optional[Any] = None):
+    def __init__(self, capital_ledger, risk_manager, ceo: Optional[Any] = None, revenue_engine: Optional[RevenueEngine] = None, execution_engine: Optional[Any] = None, experiment_engine: Optional[Any] = None):
         self.ledger = capital_ledger
         self.risk_manager = risk_manager
         self.factory = AgentFactory(risk_manager)
@@ -31,6 +31,11 @@ class AgentOrchestrator:
         self.ceo = ceo
         self.revenue_engine = revenue_engine or RevenueEngine()
         self.execution_engine = execution_engine
+
+        # Lazy import: engine.py imports AgentOrchestrator at module top,
+        # so a top-level import here would create a circular import cycle.
+        from ..evolution.engine import EvolutionSystem
+        self.evolution = EvolutionSystem(self, self.risk_manager, experiment_engine)
 
     def set_db_factory(self, db_factory):
         self._db_factory = db_factory
@@ -244,9 +249,41 @@ class AgentOrchestrator:
         if hasattr(self, 'ceo') and self.ceo is not None:
             await self._generate_ceo_decisions(db)
         await self._process_decisions(db)
-        await self._run_self_improvement_cycle(db)
+        await self.run_self_improvement_cycle(db)
+        await self._run_evolution_step(db)
         await self._evaluate_system_mode(db)
         await self._update_dashboard_state(db)
+
+    async def _run_evolution_step(self, db: AsyncSession) -> Dict[str, Any]:
+        """Population-level evolution: reproduce winners, prune failures."""
+        result = {"reproductions": [], "pruned": [], "clones": 0}
+
+        capacity = await self.evolution.check_population_capacity(db)
+        result["population"] = {k: capacity[k] for k in ("current", "soft_cap", "hard_cap")}
+
+        # 1. Reproduce winners — only when population allows
+        if capacity["can_create"]:
+            live = [a for a in self.agents.values()
+                    if a.status in (AgentStatus.ALIVE, AgentStatus.GROWING, AgentStatus.REPRODUCTION_READY)]
+            candidates = sorted(live, key=lambda a: a.lifetime_profit, reverse=True)[:3]
+
+            for parent in candidates:
+                verdict = await self.evolution.evaluate_reproduction(db, parent.id)
+                if not verdict.get("eligible"):
+                    continue
+                child = await self.evolution.clone_winner(
+                    db, parent.id,
+                    mutations={"strategy": f"{parent.strategy}_v{parent.generation + 1}"},
+                )
+                result["reproductions"].append(child)
+                result["clones"] += 1
+                break  # rate limit: at most 1 clone per cycle (hard cap is the backstop)
+
+        # 2. Prune failed agents (defensive cleanup)
+        result["pruned"] = await self.evolution.prune_agents(db)
+
+        logger.info(f"Evolution step: {result}")
+        return result
 
     async def _fetch_real_conversions(self, db: AsyncSession):
         """Periodically fetch real conversions from affiliate networks"""
