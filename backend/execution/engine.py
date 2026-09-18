@@ -135,7 +135,12 @@ class ExecutionEngine:
                 if agent_id:
                     enriched_task_data["agent_id"] = agent_id
                 tool_params = self._default_tool_params(tool_name, enriched_task_data)
-            result = await tool_registry.execute(tool_name, **tool_params)
+            try:
+                result = await tool_registry.execute(tool_name, **tool_params)
+            except Exception as e:
+                logger.warning(f"Tool '{tool_name}' execution failed: {e}")
+                results[tool_name] = {"status": "failed", "error": str(e)}
+                continue
             results[tool_name] = result
             total_cost += tool.cost
             if result.get("status") == "success":
@@ -258,6 +263,8 @@ class ExecutionEngine:
             }
         if tool_name == "track_conversions":
             return {"network": "all"}
+        if tool_name == "review_blog":
+            return {"product": f"{agent_type} {strategy}", "niche": agent_type, "affiliate_network": "amazon"}
         if tool_name == "analyze_data":
             return {"analysis_type": "summary", "data": []}
         if tool_name == "market_data":

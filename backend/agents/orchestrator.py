@@ -417,8 +417,11 @@ class AgentOrchestrator:
                     db, agent.id, task_type, task_data
                 )
                 if result.get("status") in ("success", "partial"):
+                    revenue = result.get("revenue", 0)
+                    if revenue == 0 and not result.get("real"):
+                        return self.revenue_engine.run_daily_simulation(agent)
                     return {
-                        "revenue": result.get("revenue", 0),
+                        "revenue": revenue,
                         "expenses": result.get("expenses", 0),
                         "real": result.get("real", False),
                         "tool_results": result.get("tool_results"),

@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Survival · The Floor</title>
+<meta name="description" content="Pixel-art command floor — watch 12 AI agents turn $50 into sustainable revenue.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0f16;--panel:#111a27;--bg-2:#0e1520;--panel-2:#162032;
+  --live:#34d399;--accent:#22d3ee;--warn:#f5b04c;--crit:#f87171;
+  --ink:#e2e8f0;--ink-2:#94a3b8;--ink-dim:#4a5a6a;
+  --line:rgba(148,163,184,.14);--line-strong:rgba(148,163,184,.22);
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;--display:'Chakra Petch',sans-serif;
+  --floor:#4a6a52;--floor-tile:rgba(255,255,255,.04);--desk:#9e7a38;--desk-top:#b8923e;
+  --wall:#2a2a34;--glass:rgba(148,163,184,.12);--plant:#2d8a4e;--pot:#7a5a2e;
+}
+html{color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;margin:0;overflow-x:hidden}
+a{color:var(--accent);text-decoration:none}
+img{max-width:100%}
+[hidden]{display:none!important}
+
+/* ═══ STATUSBAR ═══ */
+.statusbar{display:flex;align-items:center;gap:14px;padding:10px 22px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:80}
+.statusbar .logo{display:flex;align-items:center;gap:8px;font:600 13px/1 var(--display);letter-spacing:.08em;color:var(--accent);text-transform:uppercase}
+.statusbar .logo i{font-style:normal;font-size:18px}
+.statusbar nav{display:flex;gap:4px;margin-left:12px}
+.statusbar nav a{font:500 11px/1 var(--sans);padding:5px 10px;border-radius:6px;color:var(--ink-2);transition:background .15s,color .15s}
+.statusbar nav a:hover,.statusbar nav a[aria-current]{background:rgba(148,163,184,.08);color:var(--ink)}
+.statusbar .right{margin-left:auto;display:flex;align-items:center;gap:12px;font:500 11px var(--mono);color:var(--ink-2)}
+.statusbar .mode-chip{padding:3px 10px;border-radius:99px;font-weight:600;letter-spacing:.06em}
+.chip-live{background:rgba(52,211,153,.14);color:var(--live);border:1px solid rgba(52,211,153,.25)}
+.chip-samp{background:rgba(245,176,76,.12);color:var(--warn);border:1px solid rgba(245,176,76,.22)}
+#clock{min-width:72px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* ═══ MAIN LAYOUT ═══ */
+.main-wrap{display:flex;gap:0;height:calc(100vh - 44px);min-height:540px}
+.office-panel{flex:1;min-width:0;display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--bg-2)}
+.command-panel{width:380px;flex-shrink:0;display:flex;flex-direction:column;background:var(--panel);overflow:hidden}
+
+/* ═══ OFFICE HEADER ═══ */
+.off-header{padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:var(--panel)}
+.off-header h2{font:600 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim)}
+.off-header .mode-badge{font:500 10px var(--mono);padding:3px 10px;border-radius:99px;letter-spacing:.06em}
+.off-header .mode-badge.sample{background:rgba(245,176,76,.12);color:var(--warn);border:1px solid rgba(245,176,76,.22)}
+.off-header .mode-badge.live{background:rgba(52,211,153,.12);color:var(--live);border:1px solid rgba(52,211,153,.22)}
+
+/* ═══ FLOOR ═══ */
+.floor-wrap{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:12px;background:var(--bg-2)}
+.floor{position:relative;width:860px;height:480px;background:var(--floor);border-radius:8px;overflow:hidden;
+  background-image:repeating-linear-gradient(90deg,var(--floor-tile) 0 1px,transparent 1px 40px),
+    repeating-linear-gradient(0deg,var(--floor-tile) 0 1px,transparent 1px 40px);
+  box-shadow:0 0 0 2px var(--wall),0 8px 32px rgba(0,0,0,.5)}
+
+/* Walls */
+.wall-top{position:absolute;top:0;left:0;right:0;height:18px;background:var(--wall);z-index:10}
+.wall-bot{position:absolute;bottom:0;left:0;right:0;height:10px;background:var(--wall);z-index:10}
+.wall-left{position:absolute;top:0;left:0;bottom:0;width:10px;background:var(--wall);z-index:10}
+.wall-right{position:absolute;top:0;right:0;bottom:0;width:10px;background:var(--wall);z-index:10}
+
+/* Windows */
+.win{position:absolute;top:2px;height:14px;background:#3a5a7a;border-radius:2px;z-index:11;box-shadow:inset 0 1px 2px rgba(0,0,0,.3),0 0 6px rgba(100,180,255,.1)}
+.win::after{content:"";position:absolute;top:2px;left:2px;right:2px;height:4px;background:rgba(120,200,255,.15);border-radius:1px}
+
+/* Glass partition */
+.partition{position:absolute;width:3px;background:var(--glass);border-radius:2px;z-index:5}
+
+/* Department floor labels */
+.dept-label{position:absolute;font:600 9px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.08);pointer-events:none;z-index:1}
+
+/* ═══ DESK ═══ */
+.desk{position:absolute;z-index:8;cursor:default}
+.desk-surface{position:relative;width:72px;height:38px;background:linear-gradient(135deg,var(--desk-top),var(--desk));border-radius:3px;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.desk-monitor{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:32px;height:22px;background:#0c1218;border:2px solid #3a3a48;border-radius:2px;overflow:hidden}
+.desk-monitor .scan{position:absolute;left:2px;right:2px;height:2px;border-radius:1px;top:-2px;animation:scanDown 1.4s linear infinite}
+.desk-monitor .glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,rgba(34,211,238,.06),transparent 70%)}
+.desk-chair{position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:18px;height:12px;background:#2a2a34;border-radius:8px 8px 3px 3px;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.desk-plant{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--plant);box-shadow:0 0 4px rgba(45,138,78,.4)}
+.desk-plant.pot{border-radius:2px 2px 4px 4px;background:var(--pot);width:8px;height:7px}
+
+/* ═══ CHARACTER SPRITE ═══ */
+.char{position:absolute;z-index:9;display:flex;flex-direction:column;align-items:center;pointer-events:none}
+.char-head{width:14px;height:14px;border-radius:50%;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.char-head .eye-l,.char-head .eye-r{position:absolute;width:2px;height:2px;border-radius:50%;background:#0a0a12;top:5px}
+.char-head .eye-l{left:3px}.char-head .eye-r{right:3px}
+.char-body{width:16px;height:14px;border-radius:3px 3px 4px 4px;margin-top:-2px;box-shadow:0 2px 4px rgba(0,0,0,.3)}
+/* State badge */
+.char-badge{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font:600 7px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;padding:2px 6px;border-radius:3px;z-index:12}
+
+/* Character states */
+.desk[data-state="working"] .char{animation:bob 1.2s ease-in-out infinite}
+.desk[data-state="working"] .char-badge{background:rgba(52,211,153,.18);color:var(--live);border:1px solid rgba(52,211,153,.3)}
+.desk[data-state="working"] .desk-monitor .scan{background:var(--live)}
+.desk[data-state="idle"] .char{opacity:.5}
+.desk[data-state="idle"] .desk-monitor .scan{display:none}
+.desk[data-state="idle"] .char-badge{background:rgba(245,176,76,.15);color:var(--warn);border:1px solid rgba(245,176,76,.25)}
+.desk[data-state="starting"] .char{animation:spawnPulse 1s ease-in-out infinite}
+.desk[data-state="starting"] .desk-monitor .scan{background:var(--accent);animation:scanDown 2s linear infinite}
+.desk[data-state="starting"] .char-badge{background:rgba(34,211,238,.15);color:var(--accent);border:1px solid rgba(34,211,238,.25);animation:badgePulse 1.2s ease-in-out infinite}
+
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes scanDown{0%{top:-2px}100%{top:20px}}
+@keyframes spawnPulse{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
+@keyframes badgePulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* ═══ COMMAND CENTER ═══ */
+.cc-head{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;background:var(--panel-2)}
+.cc-head .cc-title{font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);flex:1}
+.cc-tabs{display:flex;gap:2px;padding:4px 10px;border-bottom:1px solid var(--line);overflow-x:auto;background:var(--panel)}
+.cc-tabs::-webkit-scrollbar{display:none}
+.cc-tab{font:500 9px/1 var(--mono);letter-spacing:.04em;padding:5px 10px;border-radius:5px;color:var(--ink-dim);cursor:pointer;white-space:nowrap;transition:background .12s,color .12s;border:none;background:none}
+.cc-tab:hover{background:rgba(148,163,184,.06);color:var(--ink-2)}
+.cc-tab.active{background:rgba(34,211,238,.1);color:var(--accent)}
+
+/* Tab panels */
+.cc-body{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.cc-panel{flex:1;overflow-y:auto;padding:12px 14px;display:none}
+.cc-panel.active{display:block}
+.cc-panel::-webkit-scrollbar{width:4px}
+.cc-panel::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:2px}
+
+/* Terminal panel */
+.term-line{font:400 10.5px/1.6 var(--mono);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.term-line .t{color:var(--ink-dim)}
+.term-line .plus{color:var(--live)}.term-line .minus{color:var(--crit)}.term-line .warn{color:var(--warn)}.term-line .accent{color:var(--accent)}
+
+/* Monitor panel: KPI grid */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.kpi{background:var(--bg-2);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.kpi .klabel{font:500 8px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:2px}
+.kpi .kval{font:700 16px var(--display);letter-spacing:.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+.kpi .ksub{font:400 9px var(--mono);color:var(--ink-dim);margin-top:1px}
+
+/* Tasks panel */
+.task-item{padding:8px 0;border-bottom:1px solid var(--line);font:400 10.5px var(--mono)}
+.task-item:last-child{border-bottom:none}
+.task-item .task-agent{color:var(--accent);font-weight:600;margin-right:6px}
+.task-item .task-action{color:var(--ink-2)}
+.task-item .task-status{float:right;font-size:9px;padding:2px 6px;border-radius:3px}
+.task-item .task-status.done{background:rgba(52,211,153,.12);color:var(--live)}
+.task-item .task-status.pending{background:rgba(245,176,76,.12);color:var(--warn)}
+
+/* Placeholder panels */
+.placeholder{display:flex;align-items:center;justify-content:center;height:100%;font:400 11px var(--mono);color:var(--ink-dim);text-align:center;padding:20px}
+
+/* Queue input */
+.cc-queue{border-top:1px solid var(--line);padding:10px 14px;background:var(--panel-2);display:flex;gap:6px;align-items:center}
+.cc-queue input{flex:1;background:var(--bg-2);border:1px solid var(--line);border-radius:6px;padding:7px 10px;font:400 11px var(--mono);color:var(--ink);outline:none;transition:border-color .15s}
+.cc-queue input:focus{border-color:var(--accent)}
+.cc-queue input::placeholder{color:var(--ink-dim)}
+.cc-queue button{background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.25);color:var(--accent);font:600 10px var(--mono);padding:7px 14px;border-radius:6px;cursor:pointer;transition:background .12s}
+.cc-queue button:hover{background:rgba(34,211,238,.2)}
+
+/* ═══ AGENT BAR (bottom) ═══ */
+.agent-bar{border-top:1px solid var(--line);background:var(--panel);padding:8px 14px;display:flex;gap:8px;overflow-x:auto;flex-shrink:0}
+.agent-bar::-webkit-scrollbar{height:3px}
+.agent-bar::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:2px}
+.ab-card{flex-shrink:0;width:110px;background:var(--bg-2);border:1px solid var(--line);border-radius:8px;padding:8px;text-align:center;cursor:default;transition:border-color .15s,box-shadow .15s}
+.ab-card:hover{border-color:var(--line-strong);box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.ab-card.linked{border-color:rgba(52,211,153,.35);box-shadow:0 0 0 1px rgba(52,211,153,.12)}
+.ab-portrait{width:28px;height:28px;border-radius:50%;margin:0 auto 5px;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.ab-portrait .ab-eye-l,.ab-portrait .ab-eye-r{position:absolute;width:3px;height:3px;border-radius:50%;background:#0a0a12;top:10px}
+.ab-portrait .ab-eye-l{left:7px}.ab-portrait .ab-eye-r{right:7px}
+.ab-name{font:600 10px var(--display);color:var(--ink);margin-bottom:3px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ab-state{font:600 7px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:3px;display:inline-block;margin-bottom:5px}
+.ab-state.working{background:rgba(52,211,153,.15);color:var(--live);border:1px solid rgba(52,211,153,.25)}
+.ab-state.idle{background:rgba(245,176,76,.12);color:var(--warn);border:1px solid rgba(245,176,76,.2)}
+.ab-state.starting{background:rgba(34,211,238,.12);color:var(--accent);border:1px solid rgba(34,211,238,.2)}
+.ab-btn{font:500 8px var(--mono);padding:3px 10px;border-radius:4px;border:1px solid var(--line);background:none;color:var(--ink-dim);cursor:pointer;transition:background .12s,color .12s;letter-spacing:.04em}
+.ab-btn:hover{background:rgba(34,211,238,.1);color:var(--accent);border-color:rgba(34,211,238,.25)}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:1100px){
+  .command-panel{width:320px}
+}
+@media(max-width:900px){
+  .main-wrap{flex-direction:column;height:auto}
+  .office-panel{border-right:none;border-bottom:1px solid var(--line);max-height:60vh}
+  .command-panel{width:100%;max-height:50vh}
+  .floor{transform:scale(.65);transform-origin:center center}
+}
+@media(max-width:640px){
+  .floor{transform:scale(.45);transform-origin:center center}
+  .ab-card{width:90px}
+}
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- ═══ STATUSBAR ═══ -->
+<header class="statusbar">
+  <div class="logo"><i>◆</i> AI SURVIVAL</div>
+  <nav>
+    <a href="index.html">System</a>
+    <a href="office.html" aria-current="page">Office</a>
+    <a href="reviews.html">Reviews</a>
+  </nav>
+  <div class="right">
+    <span id="dchip" class="mode-chip chip-samp">SAMPLE</span>
+    <span id="clock">--:--:--</span>
+  </div>
+</header>
+
+<!-- ═══ MAIN LAYOUT ═══ -->
+<div class="main-wrap">
+
+  <!-- ─── OFFICE PANEL ─── -->
+  <section class="office-panel">
+    <div class="off-header">
+      <h2>Command Floor · Top-Down View</h2>
+      <span id="floorBadge" class="mode-badge sample">SAMPLE</span>
+    </div>
+    <div class="floor-wrap">
+      <div class="floor" id="floor">
+
+        <!-- Walls -->
+        <div class="wall-top"></div>
+        <div class="wall-bot"></div>
+        <div class="wall-left"></div>
+        <div class="wall-right"></div>
+
+        <!-- Windows -->
+        <div class="win" style="left:50px;width:55px"></div>
+        <div class="win" style="left:140px;width:55px"></div>
+        <div class="win" style="left:300px;width:70px"></div>
+        <div class="win" style="left:480px;width:55px"></div>
+        <div class="win" style="left:570px;width:55px"></div>
+        <div class="win" style="left:700px;width:55px"></div>
+
+        <!-- Glass partitions -->
+        <div class="partition" style="left:298px;top:26px;height:430px"></div>
+        <div class="partition" style="left:570px;top:26px;height:220px"></div>
+
+        <!-- Department labels -->
+        <div class="dept-label" style="left:50px;top:30px">RESEARCH</div>
+        <div class="dept-label" style="left:360px;top:30px">CONTENT</div>
+        <div class="dept-label" style="left:620px;top:30px">SPAWN BAY</div>
+        <div class="dept-label" style="left:50px;top:235px">TREASURY</div>
+        <div class="dept-label" style="left:360px;top:235px">EXECUTIVE</div>
+
+        <!-- ═══ DESKS — ROW 1 (top section, y≈50) ═══ -->
+        <!-- Research cluster -->
+        <div class="desk" data-agent="Research" data-state="working" style="left:30px;top:46px">
+          <div class="char" style="--head:#f0d0b0;--body:#059669">
+            <div class="char-badge">working</div>
+            <div class="char-head" style="background:var(--head)"><div class="eye-l"></div><div class="eye-r"></div></div>
+            <div class="char-body" style="background:var(--body)"></div>
+          </div>
+          <div class="desk-surface"><div class="desk-monitor"><div class="scan"></div><div class="glow"></div></div></div>
+          <div class="desk-chair"></div>
+        </div>
+        <div class="desk" data-agent="Market" data-state="working" style="left:120px;top:46px">
+          <div class="char" style="--head:#d4a88c;--body:#db2777">
+            <div class="char-badge">working</div>
+            <div class="char-head" style="background:var(--head)"><div class="eye-l"></div><div class="eye-r"></div></div>
+            <div class="char-body" style="background:var(--body)"></div>
+          </div>
+          <div class="desk-surface"><div class="desk-monitor"><div class="scan"></div><div class="glow"></div></div></div>
+          <div class="desk-chair"></div>
+        </div>
+        <div class="desk" data-agent="Experiment" data-state="starting" style="left:210px;top:46px">
+          <div class="char" style="--head:#c49a6c;--body:#dc2626">
+            <div class="char-badge">starting up</div>
+            <div class="char-head" style="background:var(--head)"><div class="eye-l"></div><div class="eye-r"></div></div>
+            <div class="char-body" style="background:var(--body)"></div>
+          </div>
+          <div class="desk-surface"><div class="desk-monitor"><div class="scan"></div><div class="glow"></div></div></div>
+          <div class="desk-chair"></div>
+        </div>
+
+        <!-- Content cluster -->
+        <div class="desk" data-agent="Content" data-state="working" style="left:340px;top:46px">
+          <div class="char" style="--head:#e8c4a0;--body:#7c3aed">
+            <div class="char-badge">working</div>
+            <div class="char-head" style="background:var(--head)"><div class="eye-l"></div><div class="eye-r"></div></div>
+            <div class="char-body" style="background:var(--body)"></div>
+          </div>
+          <div class="desk-surface"><div class="desk-monitor"><div class="scan"></div><div class="glow"></div></div></div>
+          <div class="desk-chair"></div>
+        </div>
+        <div class="desk" data-agent="Affiliate" data-state="working" style="left:440px;top:46px">
+          <div class="char" style="--head:#d4a88c;--body:#ea580c">
+            <div class="char-badge">working</div>
+            <div class="char-head" style="background:var(--head)"><div class="eye-l"></div><div class="eye-r"></div></div>
+            <div class="char-body" style="background:var(--body)"></div>
+          </div>
+          <div class="desk-surface"><div class="desk-monitor"><div class="scan"></div><div class="glow"></div></div></div>
+          <div class="desk-chair"></div>
+        </div>
+        <div class="desk" data-agent="Sales" data-state="working" style="left:500px;top:46px">
+          <div class="char" style="--head:#e8c4a0;--body:#0891b2">
+            <div class="char-badge">working</div>
+            <div class="char-head" style="background:var(--head)"><div class="eye-l"></div><div class="eye-r"></div></div>
+            <div class="char-body" style="background:var(--body)"></div>
+          </div>
+          <div class="desk-surface"><div class="desk-monitor"><div class="scan"></div><div class="glow"></div></div></div>
+          <div class="desk-chair"></div>
+        </div>
+
+        <!-- Spawn Bay cluster -->
+        <div class="desk" data-agent="Factory" data-state="working" style="left:620px;top:46px">
+          <div class="char" style="--head:#e8c4a0;--body:#4338ca">
+            <div class="char-badge">working</div>
+            <div class="char-head" style="background:var(--head)"><div class="eye-l"></div><div class="eye-r"></div></div>
+            <div class="char-body" style="background:var(--body)"></div>
+          </div>
+          <div class="desk-surface"><div class="desk-monitor"><div class="scan"></div><div class="glow"></div></div></div>
+          <div class="desk-chair"></div>
+        </div>
+        <div class="desk" data-agent="Digital Product" data-state="working" style="left:750px;top:46px">
+          <div class="char" style="--head:#c49a6c;--body:#0d9488">
+            <div class="char-badge">working</div>
+            <div class="char-head" style="background:var(--head)"><div class="eye-l"></div><div class="eye-r"></div></div>
+            <div class="char-body" style="background:var(--body)"></div>
+          </div>
+          <div class="desk-surface"><div class="desk-monitor"><div class="scan"></div><div class="glow"></div></div></div>
+          <div class="desk-chair"></div>
+        </div>
+
+        <!-- ═══ DESKS — ROW 2 (middle section, y≈180) ═══ -->
+        <!-- Treasury cluster -->
+        <div class="desk" data-agent="Finance" data-state="working" style="left:30px;top:180px">
+          <div class="char" style="--head:#f0d0b0;--body:#166534">
+            <div class="char-badge">working</div>
+            <div class="char-head" style="background:var(--head)"><div class="eye-l"></div><div class="eye-r"></div></div>
+            <div class="char-body" style="background:var(--body)"></div>
+          </div>
+          <div class="desk-surface"><div class="desk-monitor"><div class="scan"></div><div class="glow"></div></div></div>
+          <div class="desk-chair"></div>
+        </div>
+        <div class="desk" data-agent="Risk Manager" data-state="idle" style="left:140px;top:180px">
+          <div class="char" style="--head:#c49a6c;--body:#374151">
+            <div class="char-badge">idle</div>
+            <div class="char-head" style="background:var(--head)"><div class="eye-l"></div><div class="eye-r"></div></div>
+            <div class="char-body" style="background:var(--body)"></div>
+          </div>
+          <div class="desk-surface"><div class="desk-monitor"><div class="scan"></div><div class="glow"></div></div></div>
+          <div class="desk-chair"></div>
+        </div>
+        <div class="desk" data-agent="Learning" data-state="idle" style="left:224px;top:180px">
+          <div class="char" style="--head:#d4a88c;--body:#be185d">
+            <div class="char-badge">idle</div>
+            <div class="char-head" style="background:var(--head)"><div class="eye-l"></div><div class="eye-r"></div></div>
+            <div class="char-body" style="background:var(--body)"></div>
+          </div>
+          <div class="desk-surface"><div class="desk-monitor"><div class="scan"></div><div class="glow"></div></div></div>
+          <div class="desk-chair"></div>
+        </div>
+
+        <!-- Executive (CEO — bigger desk, center) -->
+        <div class="desk" data-agent="CEO" data-state="working" style="left:400px;top:190px">
+          <div class="char" style="--head:#e8c4a0;--body:#1e40af">
+            <div class="char-badge">working</div>
+            <div class="char-head" style="background:var(--head)"><div class="eye-l"></div><div class="eye-r"></div></div>
+            <div class="char-body" style="background:var(--body)"></div>
+          </div>
+          <div class="desk-surface" style="width:84px;height:42px"><div class="desk-monitor" style="width:36px;height:24px"><div class="scan"></div><div class="glow"></div></div></div>
+          <div class="desk-chair"></div>
+        </div>
+
+        <!-- ═══ DECORATIONS ═══ -->
+        <!-- Plants row 1 -->
+        <div class="desk-plant" style="left:100px;top:120px"></div>
+        <div class="desk-plant" style="left:260px;top:120px"></div>
+        <div class="desk-plant" style="left:420px;top:120px"></div>
+        <div class="desk-plant" style="left:540px;top:120px"></div>
+        <div class="desk-plant" style="left:720px;top:120px"></div>
+        <!-- Plants row 2 -->
+        <div class="desk-plant" style="left:100px;top:270px"></div>
+        <div class="desk-plant" style="left:320px;top:270px"></div>
+        <div class="desk-plant" style="left:540px;top:290px"></div>
+        <div class="desk-plant" style="left:750px;top:290px"></div>
+        <!-- Potted plants -->
+        <div class="desk-plant pot" style="left:10px;top:140px"></div>
+        <div class="desk-plant pot" style="left:835px;top:140px"></div>
+        <div class="desk-plant pot" style="left:10px;top:310px"></div>
+        <div class="desk-plant pot" style="left:835px;top:350px"></div>
+        <!-- Coffee machine area -->
+        <div style="position:absolute;left:340px;top:280px;width:50px;height:30px;background:#2a2030;border-radius:4px;border:1px solid rgba(148,163,184,.12);z-index:6;display:flex;align-items:center;justify-content:center">
+          <span style="font-size:16px">☕</span>
+        </div>
+        <!-- Bookshelf -->
+        <div style="position:absolute;right:18px;top:260px;width:28px;height:60px;background:linear-gradient(180deg,#5a4a2e,#4a3a1e);border-radius:2px;z-index:6;border:1px solid rgba(148,163,184,.1)"></div>
+        <!-- Filing cabinet -->
+        <div style="position:absolute;left:18px;top:320px;width:22px;height:30px;background:#3a3a48;border-radius:2px;z-index:6;border:1px solid rgba(148,163,184,.1)"></div>
+
+      </div><!-- /floor -->
+    </div><!-- /floor-wrap -->
+  </section>
+
+  <!-- ─── COMMAND CENTER ─── -->
+  <aside class="command-panel">
+    <div class="cc-head">
+      <span class="cc-title">Command Center</span>
+      <span style="font:500 9px var(--mono);color:var(--ink-dim)" id="cc-mode">v0.3.9</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="cc-tabs" role="tablist">
+      <button class="cc-tab active" data-tab="terminal" role="tab">terminal</button>
+      <button class="cc-tab" data-tab="monitor" role="tab">monitor</button>
+      <button class="cc-tab" data-tab="tasks" role="tab">tasks</button>
+      <button class="cc-tab" data-tab="askme" role="tab">ask me</button>
+      <button class="cc-tab" data-tab="triggers" role="tab">triggers</button>
+      <button class="cc-tab" data-tab="memory" role="tab">memory</button>
+      <button class="cc-tab" data-tab="graph" role="tab">graph</button>
+      <button class="cc-tab" data-tab="activity" role="tab">activity</button>
+      <button class="cc-tab" data-tab="commands" role="tab">commands</button>
+      <button class="cc-tab" data-tab="workers" role="tab">workers</button>
+    </div>
+
+    <!-- Panels -->
+    <div class="cc-body">
+      <div class="cc-panel active" data-panel="terminal" id="log"></div>
+      <div class="cc-panel" data-panel="monitor">
+        <div class="kpi-grid">
+          <div class="kpi"><div class="klabel">Capital</div><div class="kval" id="kp-cap">—</div><div class="ksub">starting balance</div></div>
+          <div class="kpi"><div class="klabel">Reserve</div><div class="kval" id="kp-res">—</div><div class="ksub" id="kp-res-pct"></div></div>
+          <div class="kpi"><div class="klabel">Operating</div><div class="kval" id="kp-op">—</div><div class="ksub">active pool</div></div>
+          <div class="kpi"><div class="klabel">Growth</div><div class="kval" id="kp-gro">—</div><div class="ksub">reinvestment</div></div>
+          <div class="kpi"><div class="klabel">Real Revenue</div><div class="kval" id="kp-real">—</div><div class="ksub">actual earned</div></div>
+          <div class="kpi"><div class="klabel">Sim Revenue</div><div class="kval" id="kp-sim">—</div><div class="ksub">simulated</div></div>
+          <div class="kpi"><div class="klabel">Agents</div><div class="kval" id="kp-agents">—</div><div class="ksub" id="kp-mode"></div></div>
+          <div class="kpi"><div class="klabel">Active</div><div class="kval" id="kp-active">—</div><div class="ksub" id="kp-active-pct"></div></div>
+        </div>
+      </div>
+      <div class="cc-panel" data-panel="tasks" id="tasksPanel"></div>
+      <div class="cc-panel" data-panel="askme"><div class="placeholder">Ask the AI Survival system a question...</div></div>
+      <div class="cc-panel" data-panel="triggers"><div class="placeholder">Guardrail triggers and thresholds...</div></div>
+      <div class="cc-panel" data-panel="memory"><div class="placeholder">Agent memory and learned strategies...</div></div>
+      <div class="cc-panel" data-panel="graph"><div class="placeholder">Revenue graph over time...</div></div>
+      <div class="cc-panel" data-panel="activity"><div class="placeholder">Recent activity feed...</div></div>
+      <div class="cc-panel" data-panel="commands"><div class="placeholder">Manual command interface...</div></div>
+      <div class="cc-panel" data-panel="workers"><div class="placeholder">Worker process status...</div></div>
+    </div>
+
+    <!-- Queue -->
+    <div class="cc-queue">
+      <input type="text" id="queueInput" placeholder="Queue: Message an agent..." autocomplete="off">
+      <button id="queueBtn">send</button>
+    </div>
+  </aside>
+
+</div><!-- /main-wrap -->
+
+<!-- ═══ AGENT BAR ═══ -->
+<div class="agent-bar" id="agentBar"></div>
+
+<!-- ═══ JS ═══ -->
+<script>
+(function(){
+  "use strict";
+
+  /* ─── Config ─── */
+  var API_DEFAULT = "http://localhost:8000/api/v1";
+  var API_BASE = (function(){ try{ return localStorage.getItem("api_base") || API_DEFAULT; }catch(e){ return API_DEFAULT; } })();
+  var POLL = 8000;
+  var MAX_LOG = 80;
+  var dataState = "sample";
+  var chatterTimer = null;
+  var seedDone = false;
+  var CHATTER_IDX = 0;
+
+  /* ─── Helpers ─── */
+  var $=function(id){return document.getElementById(id);};
+  function pad(n){return n<10?"0"+n:""+n;}
+  function clockStr(){var d=new Date();return pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds());}
+  function fmt$(n){return "$"+Number(n||0).toFixed(2);}
+  function fmtp(n){return n==null||isNaN(n)?"n/a":Number(n).toFixed(2)+"%";}
+
+  /* ─── Department maps ─── */
+  var DEPT_OF = {
+    "CEO":"executive",
+    "Research":"research","Market":"research","Experiment":"research",
+    "Content":"content","Affiliate":"content","Sales":"content",
+    "Finance":"finance","Risk Manager":"finance","Learning":"finance",
+    "Factory":"factory","Digital Product":"factory"
+  };
+  var DEPT_LABEL = {
+    executive:"Executive",research:"Research",content:"Content",
+    finance:"Treasury",factory:"Spawn Bay"
+  };
+  var AGENT_ABBR = {
+    "CEO":"CEO","Research":"RES","Market":"MKT","Experiment":"EXP",
+    "Content":"CONT","Affiliate":"AFFL","Sales":"SALE",
+    "Finance":"FIN","Risk Manager":"RISK","Learning":"LRN",
+    "Factory":"FACT","Digital Product":"DIGI"
+  };
+
+  /* Agent portrait colors */
+  var AGENT_COLORS = {
+    "CEO":{skin:"#e8c4a0",shirt:"#1e40af"},
+    "Research":{skin:"#f0d0b0",shirt:"#059669"},
+    "Market":{skin:"#d4a88c",shirt:"#db2777"},
+    "Experiment":{skin:"#c49a6c",shirt:"#dc2626"},
+    "Content":{skin:"#e8c4a0",shirt:"#7c3aed"},
+    "Affiliate":{skin:"#d4a88c",shirt:"#ea580c"},
+    "Sales":{skin:"#e8c4a0",shirt:"#0891b2"},
+    "Finance":{skin:"#f0d0b0",shirt:"#166534"},
+    "Risk Manager":{skin:"#c49a6c",shirt:"#374151"},
+    "Learning":{skin:"#d4a88c",shirt:"#be185d"},
+    "Factory":{skin:"#e8c4a0",shirt:"#4338ca"},
+    "Digital Product":{skin:"#c49a6c",shirt:"#0d9488"}
+  };
+
+  /* ─── SAMPLE dataset ─── */
+  var SAMPLE = {
+    health:{status:"offline"},
+    capital:{capital:74.32,reserve:18.58,operating:49.30,growth:6.44,
+      real_revenue:22.10,real_expenses:0.00,simulated_revenue:63.85,simulated_expenses:11.63},
+    state:{current_mode:"GROWTH",total_agents:12,active_agents:9},
+    transactions:[
+      {action:"publish_article",category:"REVENUE",amount:4.20,status:"APPROVED",timestamp:"2026-09-15T12:04:11Z",agent_id:"CONTENT-01"},
+      {action:"spawn_agent",category:"SPAWN",amount:-3.50,status:"APPROVED",timestamp:"2026-09-15T12:05:02Z",agent_id:"FACTORY-01"},
+      {action:"optimize_price",category:"REVENUE",amount:2.14,status:"APPROVED",timestamp:"2026-09-15T12:06:18Z",agent_id:"RESEARCH-01"},
+      {action:"affiliate_click",category:"REVENUE",amount:0.87,status:"APPROVED",timestamp:"2026-09-15T12:07:44Z",agent_id:"AFFIL-01"},
+      {action:"reserve_sweep",category:"RESERVE",amount:0.00,status:"OK",timestamp:"2026-09-15T12:08:30Z",agent_id:"FINANCE-01"},
+      {action:"ad_spend",category:"EXPENSE",amount:-1.80,status:"APPROVED",timestamp:"2026-09-15T12:09:12Z",agent_id:"SALES-01"},
+      {action:"review_sale",category:"REVENUE",amount:6.50,status:"APPROVED",timestamp:"2026-09-15T12:10:05Z",agent_id:"SALES-01"},
+      {action:"niche_scan",category:"SCOUT",amount:0.00,status:"OK",timestamp:"2026-09-15T12:10:58Z",agent_id:"MKT-01"}
+    ],
+    agents:[
+      {agent_type:"CEO",status:"ACTIVE",strategy:"direct capital allocation",children:["ORCH-01","CAP-ROUTE"]},
+      {agent_type:"Research",status:"ACTIVE",strategy:"opinion-research pricing",children:["OPN-01","PRICE-SET"]},
+      {agent_type:"Market",status:"ACTIVE",strategy:"niche discovery",children:["NICHE-03","TREND-01"]},
+      {agent_type:"Experiment",status:"STARTING",strategy:"A/B hypothesis loop",children:["HYP-01"]},
+      {agent_type:"Content",status:"ACTIVE",strategy:"long-form fuel",children:["ART-01","ART-02"]},
+      {agent_type:"Affiliate",status:"ACTIVE",strategy:"amazon tag placement",children:["TAG-01","LINK-SET"]},
+      {agent_type:"Sales",status:"ACTIVE",strategy:"outbound + reviews",children:["REV-01","REV-02"]},
+      {agent_type:"Finance",status:"ACTIVE",strategy:"treasury sweeps",children:["SWEEP-01"]},
+      {agent_type:"Risk Manager",status:"IDLE",strategy:"guardrail monitoring",children:["GRD-01"]},
+      {agent_type:"Learning",status:"IDLE",strategy:"strategy distillation",children:["DIST-01"]},
+      {agent_type:"Factory",status:"ACTIVE",strategy:"asset spawn",children:["UNIT-01","UNIT-02"]},
+      {agent_type:"Digital Product",status:"ACTIVE",strategy:"offer assembly",children:["OFFER-01"]}
+    ]
+  };
+
+  /* ─── Chatter ─── */
+  var CHATTER = [
+    {who:"ORCH",text:"heartbeat ok — 12 agents accounted",kind:"accent"},
+    {who:"RISK",text:"reserve ratio 25.0% within guardrail",kind:"warn"},
+    {who:"MKT",text:"niche scan — 3 new niches priced",kind:"accent"},
+    {who:"FACT",text:"spawn queued 1 unit (Digital Product)",kind:"accent"},
+    {who:"FIN",text:"real revenue swept to reserve",kind:"plus"},
+    {who:"EXP",text:"hypothesis A/B — variant B +8%",kind:"accent"},
+    {who:"CONT",text:"publish queue flushed (2/2 done)",kind:"plus"},
+    {who:"CEO",text:"capital review — runway stable",kind:"accent"},
+    {who:"LRN",text:"strategy distillation cycle complete",kind:"accent"},
+    {who:"SALE",text:"review page indexed — impressions pending",kind:"accent"},
+    {who:"RISK",text:"max drawdown 6.2% — safe",kind:"warn"},
+    {who:"MKT",text:"competitor gap found — pricing opportunity",kind:"accent"}
+  ];
+
+  /* ─── Fetch ─── */
+  function api(path){return fetch(API_BASE+path).then(function(r){if(!r.ok)throw new Error("bad "+r.status);return r.json();});}
+  function apiOrNull(path){return api(path).catch(function(){return null;});}
+
+  /* ─── Tab switching ─── */
+  document.querySelectorAll(".cc-tab").forEach(function(tab){
+    tab.addEventListener("click",function(){
+      document.querySelectorAll(".cc-tab").forEach(function(t){t.classList.remove("active")});
+      document.querySelectorAll(".cc-panel").forEach(function(p){p.classList.remove("active")});
+      tab.classList.add("active");
+      var panel=document.querySelector('[data-panel="'+tab.getAttribute("data-tab")+'"]');
+      if(panel) panel.classList.add("active");
+    });
+  });
+
+  /* ─── Queue input ─── */
+  var queueInput=$("queueInput"), queueBtn=$("queueBtn");
+  function sendQueue(){
+    var val=(queueInput.value||"").trim();if(!val)return;
+    pushLogLine("USER",val,"accent");
+    queueInput.value="";
+  }
+  if(queueBtn) queueBtn.addEventListener("click",sendQueue);
+  if(queueInput) queueInput.addEventListener("keydown",function(e){if(e.key==="Enter")sendQueue();});
+
+  /* ─── KPI rendering ─── */
+  function renderKPIs(cap,state){
+    $("kp-cap").textContent=fmt$(cap.capital);
+    $("kp-res").textContent=fmt$(cap.reserve);
+    $("kp-res-pct").textContent=cap.capital?fmtp(cap.reserve/cap.capital*100):"";
+    $("kp-op").textContent=fmt$(cap.operating);
+    $("kp-gro").textContent=fmt$(cap.growth);
+    $("kp-real").textContent=fmt$(cap.real_revenue);
+    $("kp-sim").textContent=fmt$(cap.simulated_revenue);
+    $("kp-agents").textContent=state.total_agents||"—";
+    $("kp-mode").textContent="mode "+(state.current_mode||"—");
+    $("kp-active").textContent=state.active_agents||"—";
+    $("kp-active-pct").textContent=state.total_agents?fmtp(state.active_agents/state.total_agents*100):"";
+  }
+
+  /* ─── Floor state updates ─── */
+  function agentStateType(st){
+    var u=(st||"").toUpperCase();
+    if(u==="ACTIVE") return "working";
+    if(u==="IDLE") return "idle";
+    return "starting";
+  }
+  function renderFloor(agents){
+    var map={};
+    (agents||[]).forEach(function(a){ map[(a.agent_type||"").toLowerCase()]=a; });
+    document.querySelectorAll(".desk[data-agent]").forEach(function(el){
+      var key=el.getAttribute("data-agent").toLowerCase();
+      var ag=map[key];
+      var st=ag?agentStateType(ag.status):"idle";
+      el.setAttribute("data-state",st);
+      var badge=el.querySelector(".char-badge");
+      if(badge){
+        if(st==="working") badge.textContent="working";
+        else if(st==="idle") badge.textContent="idle";
+        else badge.textContent="starting up";
+      }
+    });
+  }
+
+  /* ─── Terminal log ─── */
+  function pushLogLine(who,text,kind){
+    var lg=$("log");if(!lg)return;
+    var row=document.createElement("div");row.className="term-line";
+    row.innerHTML="<span class='t'>["+clockStr()+"]</span> <span class='"+(kind||"accent")+"'>"+who+"</span> "+text;
+    lg.appendChild(row);
+    while(lg.children.length>MAX_LOG) lg.removeChild(lg.firstChild);
+    lg.scrollTop=lg.scrollHeight;
+  }
+  function txKind(tx){
+    var a=tx.amount||0;
+    if(a>0) return "plus";
+    if(a<0) return "minus";
+    var c=(tx.category||"").toUpperCase();
+    if(c.indexOf("RESERVE")>-1) return "warn";
+    return "accent";
+  }
+  function whoFromAgentId(id){
+    if(!id) return "SYS";
+    var parts=id.split("-");
+    return (parts[0]||"SYS").substring(0,8);
+  }
+  function renderTxs(list){
+    (list||[]).slice(0,10).forEach(function(tx){
+      var amt=tx.amount||0;
+      var sign=amt>=0?"+":"";
+      pushLogLine(whoFromAgentId(tx.agent_id),tx.action+"&nbsp;&nbsp;<span class='"+txKind(tx)+"'>"+sign+fmt$(amt)+"</span>&nbsp; "+tx.status,txKind(tx));
+    });
+  }
+  function pushChatter(){
+    var ch=CHATTER[CHATTER_IDX%CHATTER.length];CHATTER_IDX++;
+    pushLogLine(ch.who,ch.text,ch.kind);
+  }
+
+  /* ─── Tasks panel ─── */
+  function renderTasks(agents){
+    var panel=$("tasksPanel");if(!panel)return;
+    var html="";
+    (agents||[]).forEach(function(a){
+      var st=agentStateType(a.status);
+      var cls=st==="working"?"done":"pending";
+      var label=st==="working"?"active":"queued";
+      html+='<div class="task-item"><span class="task-agent">'+AGENT_ABBR[a.agent_type]+'</span>';
+      html+='<span class="task-action">'+(a.strategy||"—")+'</span>';
+      html+='<span class="task-status '+cls+'">'+label+'</span></div>';
+    });
+    panel.innerHTML=html;
+  }
+
+  /* ─── Agent bar (bottom) ─── */
+  function renderAgentBar(agents){
+    var bar=$("agentBar");if(!bar)return;
+    var html="";
+    (agents||[]).forEach(function(a){
+      var st=agentStateType(a.status);
+      var dept=DEPT_OF[a.agent_type]||"other";
+      var c=AGENT_COLORS[a.agent_type]||{skin:"#c49a6c",shirt:"#4a5a6a"};
+      html+='<div class="ab-card" data-dept="'+dept+'" data-agent="'+a.agent_type+'">';
+      html+='<div class="ab-portrait" style="background:'+c.shirt+'">';
+      html+='<div class="ab-eye-l"></div><div class="ab-eye-r"></div>';
+      html+='<div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);width:18px;height:10px;border-radius:50%;background:'+c.skin+'"></div>';
+      html+='</div>';
+      html+='<div class="ab-name">'+a.agent_type+'</div>';
+      html+='<div class="ab-state '+st+'">'+(a.status||"").toLowerCase()+'</div>';
+      html+='<button class="ab-btn" data-talk="'+a.agent_type+'">talk</button>';
+      html+='</div>';
+    });
+    bar.innerHTML=html;
+    bindCrossHighlight();
+    /* Talk buttons */
+    bar.querySelectorAll("[data-talk]").forEach(function(btn){
+      btn.addEventListener("click",function(){
+        var agent=btn.getAttribute("data-talk");
+        pushLogLine("USER","ping "+agent,"accent");
+        var input=$("queueInput");if(input){input.value="@"+agent+" ";input.focus();}
+      });
+    });
+  }
+
+  /* ─── Render full state ─── */
+  function renderLive(d){
+    dataState="live";
+    $("dchip").textContent="LIVE";$("dchip").className="mode-chip chip-live";
+    $("floorBadge").textContent="LIVE";$("floorBadge").className="mode-badge live";
+    renderKPIs(d.capital||SAMPLE.capital,d.state||SAMPLE.state);
+    renderFloor(d.agents||[]);
+    renderAgentBar(d.agents||[]);
+    renderTasks(d.agents||[]);
+    renderTxs(d.transactions||[]);
+  }
+  function renderSample(){
+    dataState="sample";
+    $("dchip").textContent="SAMPLE";$("dchip").className="mode-chip chip-samp";
+    $("floorBadge").textContent="SAMPLE";$("floorBadge").className="mode-badge sample";
+    renderKPIs(SAMPLE.capital,SAMPLE.state);
+    renderFloor(SAMPLE.agents);
+    renderAgentBar(SAMPLE.agents);
+    renderTasks(SAMPLE.agents);
+    if(!seedDone){seedDone=true;renderTxs(SAMPLE.transactions);}
+    if(!chatterTimer){
+      chatterTimer=setInterval(pushChatter,4500);
+    }
+  }
+
+  /* ─── Poll / oracle check ─── */
+  function oracleCheck(){
+    api("/capital").then(function(cap){
+      if(!cap||cap.capital==null) throw new Error("no data");
+      return Promise.all([
+        cap,
+        apiOrNull("/system/state"),
+        apiOrNull("/transactions"),
+        apiOrNull("/agents")
+      ]);
+    }).then(function(all){
+      if(chatterTimer){clearInterval(chatterTimer);chatterTimer=null;}
+      renderLive({
+        capital:all[0],
+        state:all[1]||SAMPLE.state,
+        transactions:all[2]||[],
+        agents:all[3]||SAMPLE.agents
+      });
+      pushLogLine("ORCH","heartbeat ok — "+(all[3]||[]).length+" agents, "+((all[1]||{}).current_mode||"??"),"accent");
+    }).catch(function(){
+      renderSample();
+    });
+  }
+
+  /* ─── Cross-highlight ─── */
+  function bindCrossHighlight(){
+    document.querySelectorAll("[data-dept]").forEach(function(el){
+      el.addEventListener("mouseenter",function(){
+        var dept=el.getAttribute("data-dept");
+        document.querySelectorAll("[data-dept='"+dept+"']").forEach(function(x){x.classList.add("linked");});
+      });
+      el.addEventListener("mouseleave",function(){
+        var dept=el.getAttribute("data-dept");
+        document.querySelectorAll("[data-dept='"+dept+"']").forEach(function(x){x.classList.remove("linked");});
+      });
+    });
+  }
+
+  /* ─── Clock ─── */
+  function tickClock(){$("clock").textContent=clockStr();}
+
+  /* ─── Boot ─── */
+  renderSample();
+  tickClock();
+  setInterval(tickClock,1000);
+  pushLogLine("CORE","boot ok — command floor online (mode GROWTH)","accent");
+  oracleCheck();
+  setInterval(oracleCheck,POLL);
+
+})();
+</script>
+</body>
+</html>
